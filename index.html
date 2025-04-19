@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>Limbo Hybrid</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon-192.png" />
+</head>
+<body>
+  <script>
+    // Service Worker registrieren
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('serviceworker.js').then(() => {
+        console.log("Service Worker registriert");
+      });
+    }
+
+    function openPage(path) {
+      window.location.href = path;
+    }
+
+    // Startlogik
+    const username = localStorage.getItem("limbo_username");
+    const firstStartup = localStorage.getItem("limbo_firstStartup");
+
+    if (!username) {
+      openPage("system/system programms/debugg.html");
+    } else if (firstStartup !== "done") {
+      openPage("system/system programms/firststartup.html");
+    } else {
+      openPage("system/system programms/homescreen.html");
+    }
+  </script>
+</body>
+</html>
