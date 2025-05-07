@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Limbo Hybrid</title>
 
-  <!-- Manifest & Icons -->
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+  <!-- PWA-Manifest & Icons -->
+  <link rel="manifest" href="system/code/manifest.json">
+  <link rel="icon" href="system/systemdata/icon-192.png" sizes="192x192" type="image/png">
   <meta name="theme-color" content="#ffffff">
 
   <style>
@@ -35,7 +35,7 @@
 
     // Service Worker registrieren
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('serviceworker.js')
+      navigator.serviceWorker.register('system/code/serviceworker.js')
         .then(() => console.log('Service Worker registriert'))
         .catch(err => console.warn('SW-Fehler:', err));
     }
