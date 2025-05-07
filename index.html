@@ -3,34 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#ffffff" />
   <title>Limbo Hybrid</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icon-192.png" />
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #000;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+  </style>
 </head>
 <body>
+  <div id="status">Starte Limbo Hybrid...</div>
+
   <script>
-    // Service Worker registrieren
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('serviceworker.js').then(() => {
-        console.log("Service Worker registriert");
-      });
+    const status = document.getElementById('status');
+
+    function openFullscreenPage(url) {
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error("404");
+          window.location.href = url;
+        })
+        .catch(error => {
+          status.textContent = "Fehlercode 16: Datei '" + url + "' nicht gefunden.";
+        });
     }
 
-    function openPage(path) {
-      window.location.href = path;
-    }
+    // Starte Prüfung
+    const firstLogin = localStorage.getItem("firstlogin_complete");
 
-    // Startlogik
-    const username = localStorage.getItem("limbo_username");
-    const firstStartup = localStorage.getItem("limbo_firstStartup");
-
-    if (!username) {
-      openPage("system/system programms/debugg.html");
-    } else if (firstStartup !== "done") {
-      openPage("system/system programms/firststartup.html");
+    if (!firstLogin) {
+      status.textContent = "Öffne ersten Start...";
+      openFullscreenPage("system/system programms/firststartup.html");
     } else {
-      openPage("system/system programms/homescreen.html");
+      status.textContent = "Lade Homescreen...";
+      openFullscreenPage("system/system programms/homescreen.html");
     }
   </script>
 </body>
