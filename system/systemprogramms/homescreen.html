@@ -2,43 +2,40 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Limbo Hybrid – Homescreen</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
-      background: black;
-      color: white;
+      background-color: #000;
+      color: #fff;
       font-family: sans-serif;
       overflow: hidden;
     }
-    #clock {
+    .time {
       position: absolute;
       top: 10px;
       right: 20px;
-      font-size: 16px;
+      font-size: 1rem;
     }
-    #title {
+    .title {
       position: absolute;
       top: 10px;
       left: 20px;
-      font-size: 16px;
+      font-size: 1rem;
     }
-    #carousel {
+    .carousel {
       display: flex;
-      transition: transform 0.5s ease;
+      transition: transform 0.3s ease;
       height: 100vh;
       align-items: center;
+      justify-content: center;
     }
     .program {
-      flex: 0 0 100vw;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      flex: 0 0 100%;
+      text-align: center;
       transform: scale(0.95);
-      transition: transform 0.5s ease;
+      transition: transform 0.3s ease;
     }
     .program.active {
       transform: scale(1.05);
@@ -46,21 +43,21 @@
     .program img {
       width: 120px;
       height: 120px;
-      object-fit: contain;
-      margin-bottom: 15px;
+      border-radius: 20px;
+      margin-bottom: 10px;
     }
     .program-name {
-      font-size: 20px;
-      margin-bottom: 20px;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
     }
-    #startButton {
+    .start-btn {
       position: absolute;
-      bottom: 40px;
+      bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      padding: 12px 24px;
-      font-size: 18px;
-      background-color: white;
+      padding: 12px 30px;
+      font-size: 1rem;
+      background: white;
       color: black;
       border: none;
       border-radius: 8px;
@@ -68,75 +65,69 @@
   </style>
 </head>
 <body>
-  <div id="clock"></div>
-  <div id="title">Limbo Hybrid</div>
-  <div id="carousel"></div>
-  <button id="startButton">Start</button>
+  <div class="title">Limbo Hybrid</div>
+  <div class="time" id="time"></div>
+  <div class="carousel" id="carousel"></div>
+  <button class="start-btn">Starten</button>
 
   <script>
-    document.documentElement.requestFullscreen?.();
+    // Uhrzeit live anzeigen
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("time").textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 
-    setTimeout(() => {
-      const carousel = document.getElementById("carousel");
-      const startButton = document.getElementById("startButton");
-
-      let current = 0;
-      let programList = [];
-
-      async function loadPrograms() {
-        const res = await fetch("/system/code/programms.json");
-        const programs = await res.json();
-        programList = programs;
-
-        programs.forEach((prog, index) => {
+    // Programme laden
+    fetch("/system/code/programms.json")
+      .then(response => response.json())
+      .then(data => {
+        const carousel = document.getElementById("carousel");
+        data.programms.forEach((name, index) => {
           const div = document.createElement("div");
           div.classList.add("program");
           if (index === 0) div.classList.add("active");
 
           const img = document.createElement("img");
-          img.src = `/programms/${prog.folder}/icon/logo.png`;
+          img.src = `/programms/${name}/icon/icon.png`;
+          img.alt = `${name}-Icon`;
 
-          const name = document.createElement("div");
-          name.className = "program-name";
-          name.textContent = prog.name;
+          const title = document.createElement("div");
+          title.classList.add("program-name");
+          title.textContent = name;
 
           div.appendChild(img);
-          div.appendChild(name);
+          div.appendChild(title);
           carousel.appendChild(div);
         });
 
-        updateCarousel();
-      }
-
-      function updateCarousel() {
-        const offset = -current * 100;
-        carousel.style.transform = `translateX(${offset}vw)`;
-        document.querySelectorAll('.program').forEach((el, i) => {
-          el.classList.toggle('active', i === current);
+        let current = 0;
+        document.body.addEventListener("keydown", e => {
+          const items = document.querySelectorAll(".program");
+          if (e.key === "ArrowRight" && current < items.length - 1) {
+            items[current].classList.remove("active");
+            current++;
+            items[current].classList.add("active");
+            carousel.style.transform = `translateX(-${current * 100}%)`;
+          }
+          if (e.key === "ArrowLeft" && current > 0) {
+            items[current].classList.remove("active");
+            current--;
+            items[current].classList.add("active");
+            carousel.style.transform = `translateX(-${current * 100}%)`;
+          }
         });
-      }
-
-      function updateClock() {
-        const now = new Date();
-        const h = String(now.getHours()).padStart(2, "0");
-        const m = String(now.getMinutes()).padStart(2, "0");
-        document.getElementById("clock").textContent = `${h}:${m}`;
-      }
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight") {
-          current = (current + 1) % programList.length;
-          updateCarousel();
-        } else if (e.key === "ArrowLeft") {
-          current = (current - 1 + programList.length) % programList.length;
-          updateCarousel();
-        }
       });
-
-      setInterval(updateClock, 1000);
-      updateClock();
-      loadPrograms();
-    }, 2000);
+    
+    // Vollbild aktivieren
+    window.onload = () => {
+      setTimeout(() => {
+        if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        }
+      }, 2000); // Logos laden
+    };
   </script>
 </body>
 </html>
