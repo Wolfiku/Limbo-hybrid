@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,166 +6,160 @@
   <style>
     * {
       box-sizing: border-box;
-    }
+    }body {
+  margin: 0;
+  padding: 20px;
+  background-color: #000;
+  color: #fff;
+  font-family: sans-serif;
+}
 
-    body {
-      margin: 0;
-      padding: 20px;
-      background-color: #000;
-      color: #fff;
-      font-family: sans-serif;
-    }
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-    }
+.header .title {
+  font-size: 1.2rem;
+}
 
-    .header .title {
-      font-size: 1.2rem;
-    }
+.header .time {
+  font-size: 1rem;
+  color: #ccc;
+}
 
-    .header .time {
-      font-size: 1rem;
-      color: #ccc;
-    }
+.program-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
 
-    .program-list {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+.program-item {
+  display: flex;
+  align-items: center;
+  background: #111;
+  border-radius: 12px;
+  padding: 10px 15px;
+  transition: background 0.3s;
+}
 
-    .program-item {
-      display: flex;
-      align-items: center;
-      background: #111;
-      border-radius: 12px;
-      padding: 10px 15px;
-      transition: background 0.3s;
-    }
+.program-item:hover {
+  background: #222;
+}
 
-    .program-item:hover {
-      background: #222;
-    }
+.program-name {
+  flex-grow: 1;
+  font-size: 1.1rem;
+}
 
-    .program-name {
-      flex-grow: 1;
-      font-size: 1.1rem;
-    }
+.program-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  margin-left: 10px;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  overflow: hidden;
+}
 
-    .program-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 8px;
-      object-fit: cover;
-      margin-left: 10px;
-      background: #333;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
+.program-item button {
+  padding: 6px 15px;
+  font-size: 0.9rem;
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 10px;
+}
 
-    .program-item button {
-      padding: 6px 15px;
-      font-size: 0.9rem;
-      background: white;
-      color: black;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-right: 10px;
-    }
+.program-item button:hover {
+  background: #ddd;
+}
 
-    .program-item button:hover {
-      background: #ddd;
-    }
+.error-message {
+  color: #ff6b6b;
+  background: #331;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px 0;
+  line-height: 1.6;
+  border-left: 4px solid #ff6b6b;
+}
 
-    .error-message {
-      color: #ff6b6b;
-      background: #331;
-      padding: 15px;
-      border-radius: 8px;
-      margin: 20px 0;
-      line-height: 1.6;
-      border-left: 4px solid #ff6b6b;
-    }
+.error-message pre {
+  background: #222;
+  padding: 10px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  margin: 10px 0;
+}
 
-    .error-message pre {
-      background: #222;
-      padding: 10px;
-      border-radius: 4px;
-      overflow-x: auto;
-      font-size: 0.9rem;
-      margin: 10px 0;
-    }
+.error-message strong {
+  color: #ff8c8c;
+}
 
-    .error-message strong {
-      color: #ff8c8c;
-    }
+.loading-message {
+  color: #ccc;
+  text-align: center;
+  padding: 20px;
+}
 
-    .loading-message {
-      color: #ccc;
-      text-align: center;
-      padding: 20px;
-    }
+.missing-programs {
+  color: #ff6b6b;
+  background: #331;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+  border-left: 4px solid #ff6b6b;
+}
 
-    .missing-programs {
-      color: #ff6b6b;
-      background: #331;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      border-left: 4px solid #ff6b6b;
-    }
+.missing-programs h3 {
+  color: #ff8c8c;
+  margin-top: 0;
+}
 
-    .missing-programs h3 {
-      color: #ff8c8c;
-      margin-top: 0;
-    }
   </style>
 </head>
-<body>
-
-  <div class="header">
+<body>  <div class="header">
     <div class="title">Limbo Hybrid</div>
     <div class="time" id="time">--:--:--</div>
-  </div>
-
-  <div class="program-list" id="programList">
+  </div>  <div class="program-list" id="programList">
     <div class="loading-message">Loading programs...</div>
-  </div>
-
-  <script>
+  </div>  <script>
     // Program configuration with exact paths
     const programConfig = {
       "clock": {
         name: "Clock",
-        htmlPath: "programms/clock/clock.html",
-        iconPath: "programms/clock/icon/icon.png"
+        htmlPath: "Limbo-hybrid/programms/clock/clock.html",
+        iconPath: "Limbo-hybrid/programms/clock/icon/icon.png"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        htmlPath: "programms/Colorfull Pallets/Colorfull Palets.html",
-        iconPath: "programms/Colorfull Pallets/icon/icon.png"
+        htmlPath: "Limbo-hybrid/programms/Colorfull Pallets/Colorfull Palets.html",
+        iconPath: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        htmlPath: "programms/Storywrighter/Storywrighter.html",
-        iconPath: "programms/Storywrighter/icon/icon.png"
+        htmlPath: "Limbo-hybrid/programms/Storywrighter/Storywrighter.html",
+        iconPath: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        htmlPath: "programms/Qr-Maker/Qr Code Generator.html",
-        iconPath: "programms/Qr-Maker/icon/icon.png"
+        htmlPath: "Limbo-hybrid/programms/Qr-Maker/Qr%20Code%20Generator.html",
+        iconPath: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
       },
       "Dynamic": {
         name: "Dynamic",
-        htmlPath: "programms/Dynamic/Dynamic Notes.html",
-        iconPath: "programms/Dynamic/icon/icon.png"
+        htmlPath: "Limbo-hybrid/programms/Dynamic/Dynamic%20Notes.html",
+        iconPath: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
       }
     };
 
@@ -176,10 +169,10 @@
     // Live time display
     function updateTime() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit' 
+      const timeStr = now.toLocaleTimeString('en-US', {   
+        hour: '2-digit',   
+        minute: '2-digit',   
+        second: '2-digit'   
       });
       document.getElementById("time").textContent = timeStr;
     }
@@ -190,7 +183,7 @@
     async function checkProgramExists(programId) {
       const config = programConfig[programId];
       if (!config) return false;
-      
+        
       try {
         const response = await fetch(config.htmlPath, { method: 'HEAD' });
         return response.ok;
@@ -256,7 +249,7 @@
 
         const icon = document.createElement("div");
         icon.className = "program-icon";
-        
+          
         // Try to load icon
         const img = document.createElement("img");
         img.src = config.iconPath;
@@ -265,22 +258,22 @@
         img.style.height = "100%";
         img.style.objectFit = "cover";
         img.style.borderRadius = "8px";
-        
+          
         // Fallback if icon cannot be loaded
         img.onerror = () => {
           icon.innerHTML = config.name.charAt(0).toUpperCase();
           icon.style.fontSize = "1.5rem";
           icon.style.fontWeight = "bold";
         };
-        
+          
         img.onload = () => {
           icon.innerHTML = "";
           icon.appendChild(img);
         };
-        
+          
         // Show first letter initially
         icon.innerHTML = config.name.charAt(0).toUpperCase();
-        
+          
         // Try to load icon
         setTimeout(() => {
           icon.appendChild(img);
@@ -298,10 +291,10 @@
       const config = programConfig[programId];
       console.log(`Starting program: ${config.name}`);
       console.log(`HTML Path: ${config.htmlPath}`);
-      
+        
       // For now: Show alert (you said we'll implement this later)
       alert(`Program "${config.name}" is starting...\n\nPath: ${config.htmlPath}`);
-      
+        
       // TODO: Implement actual program loading
       // window.open(config.htmlPath, '_blank');
       // or load in iframe/modal
@@ -310,18 +303,18 @@
     // Show missing programs at the bottom
     function showMissingPrograms(missingPrograms) {
       const list = document.getElementById("programList");
-      
+        
       const missingDiv = document.createElement("div");
       missingDiv.className = "missing-programs";
-      
+        
       const title = document.createElement("h3");
       title.textContent = "⚠️ Missing Required Programs";
       missingDiv.appendChild(title);
-      
+        
       const description = document.createElement("p");
       description.innerHTML = "The following essential programs are missing and need to be installed:";
       missingDiv.appendChild(description);
-      
+        
       const programList = document.createElement("ul");
       missingPrograms.forEach(programId => {
         const config = programConfig[programId];
@@ -334,7 +327,7 @@
         programList.appendChild(listItem);
       });
       missingDiv.appendChild(programList);
-      
+        
       const solution = document.createElement("p");
       solution.innerHTML = `
         <strong>Solutions:</strong><br>
@@ -344,14 +337,14 @@
         • Check file permissions
       `;
       missingDiv.appendChild(solution);
-      
+        
       list.appendChild(missingDiv);
     }
 
     // Show error when no programs found
     function showNoPrograms() {
       const list = document.getElementById("programList");
-      
+        
       const errorDiv = document.createElement("div");
       errorDiv.className = "error-message";
       errorDiv.innerHTML = `
@@ -368,7 +361,7 @@
         • Check that all program files exist<br>
         • Verify file and folder names are correct
       `;
-      
+        
       const reloadBtn = document.createElement("button");
       reloadBtn.textContent = "Try Again";
       reloadBtn.style.marginTop = "15px";
@@ -382,14 +375,12 @@
         list.innerHTML = '<div class="loading-message">Loading programs...</div>';
         loadPrograms();
       };
-      
+        
       errorDiv.appendChild(reloadBtn);
       list.appendChild(errorDiv);
     }
 
     // Load programs when page loads
     document.addEventListener('DOMContentLoaded', loadPrograms);
-  </script>
-
-</body>
+  </script></body>
 </html>
