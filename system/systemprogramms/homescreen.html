@@ -2,172 +2,136 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Homescreen – Limbo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Limbo Hybrid – Homescreen</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      padding: 0;
-      background: #000;
+      padding: 20px;
+      background-color: #000;
       color: #fff;
       font-family: sans-serif;
-      overflow: hidden;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .header .title {
+      font-size: 1.2rem;
+    }
+
+    .header .time {
+      font-size: 1rem;
+      color: #ccc;
+    }
+
+    .program-list {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      gap: 15px;
     }
 
-    .carousel-container {
-      position: relative;
-      width: 100%;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
+    .program-item {
       display: flex;
       align-items: center;
-      gap: 20px;
-      padding: 20px;
-      scroll-behavior: smooth;
-    }
-
-    .program-card {
-      position: relative;
-      flex: 0 0 140px;
-      height: 180px;
-      border-radius: 20px;
-      background: #222;
-      scroll-snap-align: center;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      transition: transform 0.3s ease;
-    }
-
-    .program-card img {
-      width: 100%;
-      height: 60%;
-      object-fit: cover;
-    }
-
-    .program-card .label {
-      background: #000;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      color: #fff;
-    }
-
-    .center-highlight {
-      transform: scale(1.25);
-      z-index: 5;
-    }
-
-    .carousel-container::-webkit-scrollbar {
-      display: none;
-    }
-
-    #start-button {
-      margin-top: 20px;
-      padding: 10px 25px;
-      border: none;
-      border-radius: 20px;
-      background: #fff;
-      color: #000;
-      font-size: 1em;
-      cursor: pointer;
+      background: #111;
+      border-radius: 12px;
+      padding: 10px 15px;
       transition: background 0.3s;
     }
 
-    #start-button:hover {
-      background: #ddd;
+    .program-item:hover {
+      background: #222;
+    }
+
+    .program-name {
+      flex-grow: 1;
+      font-size: 1.1rem;
+    }
+
+    .program-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-left: 10px;
+    }
+
+    .program-item button {
+      padding: 6px 15px;
+      font-size: 0.9rem;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <div class="carousel-container" id="deck">
-    <!-- Karten werden per JS eingefügt -->
+
+  <div class="header">
+    <div class="title">Limbo Hybrid</div>
+    <div class="time" id="time">--:--:--</div>
   </div>
-  <button id="start-button">Starten</button>
+
+  <div class="program-list" id="programList">
+    <!-- Programme werden dynamisch geladen -->
+  </div>
 
   <script>
-    const deck = document.getElementById('deck');
-
-    function createCard(data) {
-      const card = document.createElement('div');
-      card.className = 'program-card';
-      const img = document.createElement('img');
-      img.src = data.img;
-      const label = document.createElement('div');
-      label.className = 'label';
-      label.textContent = data.name;
-      card.appendChild(img);
-      card.appendChild(label);
-      return card;
+    // Uhrzeit live anzeigen
+    function updateTime() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById("time").textContent = timeStr;
     }
+    updateTime();
+    setInterval(updateTime, 1000);
 
-    fetch('/system/code/programms.json')
-      .then(res => res.json())
-      .then(json => {
-        const programs = json.programms.map(name => ({
-          name,
-          img: `/programms/${name}/icon/icon.png`
-        }));
+    // Programme aus JSON-Datei laden
+    fetch("/system/code/programms.json")
+      .then(response => response.json())
+      .then(data => {
+        const list = document.getElementById("programList");
+        data.programms.forEach(name => {
+          const item = document.createElement("div");
+          item.className = "program-item";
 
-        const total = programs.length;
-        const items = [programs[total - 1], ...programs, programs[0]];
-        items.forEach(prog => deck.appendChild(createCard(prog)));
+          const label = document.createElement("div");
+          label.className = "program-name";
+          label.textContent = name;
 
-        const cards = deck.querySelectorAll('.program-card');
-        const cardWidth = cards[0].offsetWidth + 20;
-        deck.scrollLeft = cardWidth;
+          const icon = document.createElement("img");
+          icon.className = "program-icon";
+          icon.src = `/programms/${name}/icon/icon.png`;
+          icon.alt = `${name} Icon`;
 
-        highlightCenter();
+          const btn = document.createElement("button");
+          btn.textContent = "Starten";
+          btn.onclick = () => {
+            alert(`Programm gestartet: ${name}`);
+            // Hier später: Programm in Vollbild starten
+          };
 
-        deck.addEventListener('scroll', () => {
-          highlightCenter();
-          const maxScroll = deck.scrollWidth - deck.clientWidth;
-          const threshold = 20;
-          if (deck.scrollLeft < threshold) {
-            deck.scrollLeft = maxScroll - 2 * cardWidth;
-          } else if (deck.scrollLeft > maxScroll - threshold) {
-            deck.scrollLeft = cardWidth;
-          }
+          item.appendChild(label);
+          item.appendChild(btn);
+          item.appendChild(icon);
+          list.appendChild(item);
         });
-
-        document.getElementById('start-button').addEventListener('click', () => {
-          const selected = document.querySelector('.center-highlight .label').textContent;
-          alert('Programm gestartet: ' + selected);
-        });
+      })
+      .catch(err => {
+        console.error("Fehler beim Laden der Programme:", err);
       });
-
-    function highlightCenter() {
-      let closest = null, minDist = Infinity;
-      const cards = deck.querySelectorAll('.program-card');
-      const containerCenter = deck.getBoundingClientRect().left + deck.offsetWidth / 2;
-      cards.forEach(card => {
-        const rect = card.getBoundingClientRect();
-        const dist = Math.abs(rect.left + rect.width / 2 - containerCenter);
-        card.classList.remove('center-highlight');
-        if (dist < minDist) {
-          minDist = dist;
-          closest = card;
-        }
-      });
-      if (closest) {
-        closest.classList.add('center-highlight');
-      }
-    }
-
-    window.onload = () => {
-      setTimeout(() => {
-        if (document.documentElement.requestFullscreen) {
-          document.documentElement.requestFullscreen();
-        }
-      }, 2000); // 2 Sekunden warten zum Laden der Logos
-    };
   </script>
+
 </body>
 </html>
