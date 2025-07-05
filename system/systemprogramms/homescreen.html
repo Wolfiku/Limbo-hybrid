@@ -113,6 +113,20 @@
       text-align: center;
       padding: 20px;
     }
+
+    .missing-programs {
+      color: #ff6b6b;
+      background: #331;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #ff6b6b;
+    }
+
+    .missing-programs h3 {
+      color: #ff8c8c;
+      margin-top: 0;
+    }
   </style>
 </head>
 <body>
@@ -127,6 +141,38 @@
   </div>
 
   <script>
+    // Program configuration with exact paths
+    const programConfig = {
+      "clock": {
+        name: "Clock",
+        htmlPath: "programms/clock/clock.html",
+        iconPath: "programms/clock/icon/icon.png"
+      },
+      "Colorfull Pallets": {
+        name: "Colorfull Pallets",
+        htmlPath: "programms/Colorfull Pallets/Colorfull Palets.html",
+        iconPath: "programms/Colorfull Pallets/icon/icon.png"
+      },
+      "Storywrighter": {
+        name: "Storywrighter",
+        htmlPath: "programms/Storywrighter/Storywrighter.html",
+        iconPath: "programms/Storywrighter/icon/icon.png"
+      },
+      "Qr-Maker": {
+        name: "Qr-Maker",
+        htmlPath: "programms/Qr-Maker/Qr Code Generator.html",
+        iconPath: "programms/Qr-Maker/icon/icon.png"
+      },
+      "Dynamic": {
+        name: "Dynamic",
+        htmlPath: "programms/Dynamic/Dynamic Notes.html",
+        iconPath: "programms/Dynamic/icon/icon.png"
+      }
+    };
+
+    // Required programs that must be present
+    const requiredPrograms = ["clock", "Colorfull Pallets", "Storywrighter", "Qr-Maker", "Dynamic"];
+
     // Live time display
     function updateTime() {
       const now = new Date();
@@ -140,148 +186,72 @@
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Fallback programs if JSON cannot be loaded
-    const fallbackPrograms = [
-      "Calculator",
-      "TextEditor", 
-      "Browser",
-      "FileManager",
-      "Settings"
-    ];
-
-    // Load programs from JSON file
-    async function loadPrograms() {
-      const list = document.getElementById("programList");
+    // Check if program files exist
+    async function checkProgramExists(programId) {
+      const config = programConfig[programId];
+      if (!config) return false;
       
       try {
-        // Try different paths
-        const possiblePaths = [
-          "./system/code/programms.json",
-          "system/code/programms.json",
-          "/system/code/programms.json",
-          "programms.json"
-        ];
-
-        let data = null;
-        let loadedFrom = null;
-        let lastError = null;
-
-        for (const path of possiblePaths) {
-          try {
-            console.log(`Attempting to load programs from: ${path}`);
-            const response = await fetch(path);
-            if (response.ok) {
-              data = await response.json();
-              loadedFrom = path;
-              console.log(`✓ Programs successfully loaded from: ${loadedFrom}`);
-              break;
-            } else {
-              lastError = `HTTP ${response.status}: ${response.statusText}`;
-              console.warn(`✗ Failed to load from ${path}: ${lastError}`);
-            }
-          } catch (err) {
-            lastError = err.message;
-            console.warn(`✗ Failed to load from ${path}: ${lastError}`);
-            continue;
-          }
-        }
-
-        // If JSON could not be loaded
-        if (!data) {
-          const errorMessage = `
-            <strong>No programs found!</strong><br><br>
-            <strong>Possible issues:</strong><br>
-            • The file 'programms.json' does not exist<br>
-            • Wrong file path (expected: system/code/programms.json)<br>
-            • No permission to read the file<br>
-            • File is blocked by local server (CORS)<br><br>
-            <strong>Last error:</strong> ${lastError}<br><br>
-            <strong>Solutions:</strong><br>
-            1. Create the file 'system/code/programms.json'<br>
-            2. Use a local server (e.g. Live Server)<br>
-            3. Check file permissions<br><br>
-            <strong>Attempted paths:</strong><br>
-            ${possiblePaths.map(path => `• ${path}`).join('<br>')}
-          `;
-          showDetailedError(errorMessage);
-          return;
-        }
-
-        // If JSON structure is invalid
-        if (!data.programms || !Array.isArray(data.programms)) {
-          const errorMessage = `
-            <strong>Invalid JSON structure!</strong><br><br>
-            <strong>Problem:</strong> The JSON file doesn't have the expected structure<br><br>
-            <strong>Expected:</strong><br>
-            <pre>{
-  "programms": [
-    "Program1",
-    "Program2",
-    "Program3"
-  ]
-}</pre><br>
-            <strong>Found:</strong> ${JSON.stringify(data, null, 2)}<br><br>
-            <strong>Solution:</strong> Correct the JSON structure in the file
-          `;
-          showDetailedError(errorMessage);
-          return;
-        }
-
-        // If programs array is empty
-        if (data.programms.length === 0) {
-          const errorMessage = `
-            <strong>No programs defined!</strong><br><br>
-            <strong>Problem:</strong> The "programms" array is empty<br><br>
-            <strong>Solution:</strong> Add programs to the JSON file:<br>
-            <pre>{
-  "programms": [
-    "Calculator",
-    "TextEditor",
-    "Browser"
-  ]
-}</pre>
-          `;
-          showDetailedError(errorMessage);
-          return;
-        }
-
-        // Programs loaded successfully
-        console.log(`✓ ${data.programms.length} programs found`);
-        displayPrograms(data.programms);
-
+        const response = await fetch(config.htmlPath, { method: 'HEAD' });
+        return response.ok;
       } catch (err) {
-        console.error("Unexpected error:", err);
-        const errorMessage = `
-          <strong>Unexpected error!</strong><br><br>
-          <strong>Error message:</strong> ${err.message}<br><br>
-          <strong>Error type:</strong> ${err.name}<br><br>
-          <strong>Possible causes:</strong><br>
-          • JavaScript error in code<br>
-          • Browser compatibility issues<br>
-          • Network problems<br><br>
-          <strong>Solution:</strong> Check the browser console for more details
-        `;
-        showDetailedError(errorMessage);
+        return false;
+      }
+    }
+
+    // Load and verify programs
+    async function loadPrograms() {
+      const list = document.getElementById("programList");
+      list.innerHTML = ""; // Remove loading message
+
+      const availablePrograms = [];
+      const missingPrograms = [];
+
+      // Check each required program
+      for (const programId of requiredPrograms) {
+        const exists = await checkProgramExists(programId);
+        if (exists) {
+          availablePrograms.push(programId);
+          console.log(`✓ Program found: ${programId}`);
+        } else {
+          missingPrograms.push(programId);
+          console.warn(`✗ Program missing: ${programId}`);
+        }
+      }
+
+      // Display available programs
+      if (availablePrograms.length > 0) {
+        displayPrograms(availablePrograms);
+      }
+
+      // Show missing programs error at the bottom
+      if (missingPrograms.length > 0) {
+        showMissingPrograms(missingPrograms);
+      }
+
+      // If no programs found at all
+      if (availablePrograms.length === 0) {
+        showNoPrograms();
       }
     }
 
     // Display programs
-    function displayPrograms(programs) {
+    function displayPrograms(programIds) {
       const list = document.getElementById("programList");
-      list.innerHTML = ""; // Remove loading message
 
-      programs.forEach(name => {
+      programIds.forEach(programId => {
+        const config = programConfig[programId];
         const item = document.createElement("div");
         item.className = "program-item";
 
         const label = document.createElement("div");
         label.className = "program-name";
-        label.textContent = name;
+        label.textContent = config.name;
 
         const btn = document.createElement("button");
         btn.textContent = "Launch";
         btn.onclick = () => {
-          startProgram(name);
+          startProgram(programId);
         };
 
         const icon = document.createElement("div");
@@ -289,8 +259,8 @@
         
         // Try to load icon
         const img = document.createElement("img");
-        img.src = `./programms/${name}/icon/icon.png`;
-        img.alt = `${name} Icon`;
+        img.src = config.iconPath;
+        img.alt = `${config.name} Icon`;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "cover";
@@ -298,7 +268,7 @@
         
         // Fallback if icon cannot be loaded
         img.onerror = () => {
-          icon.innerHTML = name.charAt(0).toUpperCase();
+          icon.innerHTML = config.name.charAt(0).toUpperCase();
           icon.style.fontSize = "1.5rem";
           icon.style.fontWeight = "bold";
         };
@@ -309,7 +279,7 @@
         };
         
         // Show first letter initially
-        icon.innerHTML = name.charAt(0).toUpperCase();
+        icon.innerHTML = config.name.charAt(0).toUpperCase();
         
         // Try to load icon
         setTimeout(() => {
@@ -324,35 +294,81 @@
     }
 
     // Start program
-    function startProgram(name) {
-      console.log(`Starting program: ${name}`);
+    function startProgram(programId) {
+      const config = programConfig[programId];
+      console.log(`Starting program: ${config.name}`);
+      console.log(`HTML Path: ${config.htmlPath}`);
       
-      // Here you would normally load the program
-      // Example paths that could be tried:
-      const possiblePaths = [
-        `./programms/${name}/index.html`,
-        `./programms/${name}/${name.toLowerCase()}.html`,
-        `./programms/${name}/main.html`
-      ];
+      // For now: Show alert (you said we'll implement this later)
+      alert(`Program "${config.name}" is starting...\n\nPath: ${config.htmlPath}`);
       
-      // For demo: Show alert
-      alert(`Program "${name}" is starting...`);
-      
-      // Later you could load the program in an iframe or new window:
-      // window.open(possiblePaths[0], '_blank');
-      // or display in a modal/overlay
+      // TODO: Implement actual program loading
+      // window.open(config.htmlPath, '_blank');
+      // or load in iframe/modal
     }
 
-    // Show detailed errors
-    function showDetailedError(htmlMessage) {
+    // Show missing programs at the bottom
+    function showMissingPrograms(missingPrograms) {
       const list = document.getElementById("programList");
-      list.innerHTML = ""; // Remove loading message
+      
+      const missingDiv = document.createElement("div");
+      missingDiv.className = "missing-programs";
+      
+      const title = document.createElement("h3");
+      title.textContent = "⚠️ Missing Required Programs";
+      missingDiv.appendChild(title);
+      
+      const description = document.createElement("p");
+      description.innerHTML = "The following essential programs are missing and need to be installed:";
+      missingDiv.appendChild(description);
+      
+      const programList = document.createElement("ul");
+      missingPrograms.forEach(programId => {
+        const config = programConfig[programId];
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `
+          <strong>${config.name}</strong><br>
+          Expected at: <code>${config.htmlPath}</code><br>
+          Icon at: <code>${config.iconPath}</code>
+        `;
+        programList.appendChild(listItem);
+      });
+      missingDiv.appendChild(programList);
+      
+      const solution = document.createElement("p");
+      solution.innerHTML = `
+        <strong>Solutions:</strong><br>
+        • Check if the program files exist at the specified paths<br>
+        • Verify folder and file names match exactly (case-sensitive)<br>
+        • Ensure you're running from a local server (not file:// protocol)<br>
+        • Check file permissions
+      `;
+      missingDiv.appendChild(solution);
+      
+      list.appendChild(missingDiv);
+    }
+
+    // Show error when no programs found
+    function showNoPrograms() {
+      const list = document.getElementById("programList");
       
       const errorDiv = document.createElement("div");
       errorDiv.className = "error-message";
-      errorDiv.innerHTML = htmlMessage;
+      errorDiv.innerHTML = `
+        <strong>No programs found!</strong><br><br>
+        <strong>Problem:</strong> None of the required programs could be found<br><br>
+        <strong>Required programs:</strong><br>
+        ${requiredPrograms.map(id => {
+          const config = programConfig[id];
+          return `• ${config.name} (${config.htmlPath})`;
+        }).join('<br>')}<br><br>
+        <strong>Solutions:</strong><br>
+        • Make sure you have the correct folder structure<br>
+        • Use a local web server (Live Server, http-server, etc.)<br>
+        • Check that all program files exist<br>
+        • Verify file and folder names are correct
+      `;
       
-      // Add reload button
       const reloadBtn = document.createElement("button");
       reloadBtn.textContent = "Try Again";
       reloadBtn.style.marginTop = "15px";
@@ -369,15 +385,6 @@
       
       errorDiv.appendChild(reloadBtn);
       list.appendChild(errorDiv);
-    }
-
-    // Show simple errors
-    function showError(message) {
-      const list = document.getElementById("programList");
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "error-message";
-      errorDiv.textContent = message;
-      list.prepend(errorDiv);
     }
 
     // Load programs when page loads
