@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -63,6 +63,11 @@
       border-radius: 8px;
       object-fit: cover;
       margin-left: 10px;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
     }
 
     .program-item button {
@@ -73,6 +78,40 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .program-item button:hover {
+      background: #ddd;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      background: #331;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      line-height: 1.6;
+      border-left: 4px solid #ff6b6b;
+    }
+
+    .error-message pre {
+      background: #222;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      margin: 10px 0;
+    }
+
+    .error-message strong {
+      color: #ff8c8c;
+    }
+
+    .loading-message {
+      color: #ccc;
+      text-align: center;
+      padding: 20px;
     }
   </style>
 </head>
@@ -84,53 +123,265 @@
   </div>
 
   <div class="program-list" id="programList">
-    <!-- Programme werden dynamisch geladen -->
+    <div class="loading-message">Loading programs...</div>
   </div>
 
   <script>
-    // Uhrzeit live anzeigen
+    // Live time display
     function updateTime() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const timeStr = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      });
       document.getElementById("time").textContent = timeStr;
     }
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Programme aus JSON-Datei laden
-    fetch("/system/code/programms.json")
-      .then(response => response.json())
-      .then(data => {
-        const list = document.getElementById("programList");
-        data.programms.forEach(name => {
-          const item = document.createElement("div");
-          item.className = "program-item";
+    // Fallback programs if JSON cannot be loaded
+    const fallbackPrograms = [
+      "Calculator",
+      "TextEditor", 
+      "Browser",
+      "FileManager",
+      "Settings"
+    ];
 
-          const label = document.createElement("div");
-          label.className = "program-name";
-          label.textContent = name;
+    // Load programs from JSON file
+    async function loadPrograms() {
+      const list = document.getElementById("programList");
+      
+      try {
+        // Try different paths
+        const possiblePaths = [
+          "./system/code/programms.json",
+          "system/code/programms.json",
+          "/system/code/programms.json",
+          "programms.json"
+        ];
 
-          const icon = document.createElement("img");
-          icon.className = "program-icon";
-          icon.src = `/programms/${name}/icon/icon.png`;
-          icon.alt = `${name} Icon`;
+        let data = null;
+        let loadedFrom = null;
+        let lastError = null;
 
-          const btn = document.createElement("button");
-          btn.textContent = "Starten";
-          btn.onclick = () => {
-            alert(`Programm gestartet: ${name}`);
-            // Hier später: Programm in Vollbild starten
-          };
+        for (const path of possiblePaths) {
+          try {
+            console.log(`Attempting to load programs from: ${path}`);
+            const response = await fetch(path);
+            if (response.ok) {
+              data = await response.json();
+              loadedFrom = path;
+              console.log(`✓ Programs successfully loaded from: ${loadedFrom}`);
+              break;
+            } else {
+              lastError = `HTTP ${response.status}: ${response.statusText}`;
+              console.warn(`✗ Failed to load from ${path}: ${lastError}`);
+            }
+          } catch (err) {
+            lastError = err.message;
+            console.warn(`✗ Failed to load from ${path}: ${lastError}`);
+            continue;
+          }
+        }
 
-          item.appendChild(label);
-          item.appendChild(btn);
-          item.appendChild(icon);
-          list.appendChild(item);
-        });
-      })
-      .catch(err => {
-        console.error("Fehler beim Laden der Programme:", err);
+        // If JSON could not be loaded
+        if (!data) {
+          const errorMessage = `
+            <strong>No programs found!</strong><br><br>
+            <strong>Possible issues:</strong><br>
+            • The file 'programms.json' does not exist<br>
+            • Wrong file path (expected: system/code/programms.json)<br>
+            • No permission to read the file<br>
+            • File is blocked by local server (CORS)<br><br>
+            <strong>Last error:</strong> ${lastError}<br><br>
+            <strong>Solutions:</strong><br>
+            1. Create the file 'system/code/programms.json'<br>
+            2. Use a local server (e.g. Live Server)<br>
+            3. Check file permissions<br><br>
+            <strong>Attempted paths:</strong><br>
+            ${possiblePaths.map(path => `• ${path}`).join('<br>')}
+          `;
+          showDetailedError(errorMessage);
+          return;
+        }
+
+        // If JSON structure is invalid
+        if (!data.programms || !Array.isArray(data.programms)) {
+          const errorMessage = `
+            <strong>Invalid JSON structure!</strong><br><br>
+            <strong>Problem:</strong> The JSON file doesn't have the expected structure<br><br>
+            <strong>Expected:</strong><br>
+            <pre>{
+  "programms": [
+    "Program1",
+    "Program2",
+    "Program3"
+  ]
+}</pre><br>
+            <strong>Found:</strong> ${JSON.stringify(data, null, 2)}<br><br>
+            <strong>Solution:</strong> Correct the JSON structure in the file
+          `;
+          showDetailedError(errorMessage);
+          return;
+        }
+
+        // If programs array is empty
+        if (data.programms.length === 0) {
+          const errorMessage = `
+            <strong>No programs defined!</strong><br><br>
+            <strong>Problem:</strong> The "programms" array is empty<br><br>
+            <strong>Solution:</strong> Add programs to the JSON file:<br>
+            <pre>{
+  "programms": [
+    "Calculator",
+    "TextEditor",
+    "Browser"
+  ]
+}</pre>
+          `;
+          showDetailedError(errorMessage);
+          return;
+        }
+
+        // Programs loaded successfully
+        console.log(`✓ ${data.programms.length} programs found`);
+        displayPrograms(data.programms);
+
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        const errorMessage = `
+          <strong>Unexpected error!</strong><br><br>
+          <strong>Error message:</strong> ${err.message}<br><br>
+          <strong>Error type:</strong> ${err.name}<br><br>
+          <strong>Possible causes:</strong><br>
+          • JavaScript error in code<br>
+          • Browser compatibility issues<br>
+          • Network problems<br><br>
+          <strong>Solution:</strong> Check the browser console for more details
+        `;
+        showDetailedError(errorMessage);
+      }
+    }
+
+    // Display programs
+    function displayPrograms(programs) {
+      const list = document.getElementById("programList");
+      list.innerHTML = ""; // Remove loading message
+
+      programs.forEach(name => {
+        const item = document.createElement("div");
+        item.className = "program-item";
+
+        const label = document.createElement("div");
+        label.className = "program-name";
+        label.textContent = name;
+
+        const btn = document.createElement("button");
+        btn.textContent = "Launch";
+        btn.onclick = () => {
+          startProgram(name);
+        };
+
+        const icon = document.createElement("div");
+        icon.className = "program-icon";
+        
+        // Try to load icon
+        const img = document.createElement("img");
+        img.src = `./programms/${name}/icon/icon.png`;
+        img.alt = `${name} Icon`;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "8px";
+        
+        // Fallback if icon cannot be loaded
+        img.onerror = () => {
+          icon.innerHTML = name.charAt(0).toUpperCase();
+          icon.style.fontSize = "1.5rem";
+          icon.style.fontWeight = "bold";
+        };
+        
+        img.onload = () => {
+          icon.innerHTML = "";
+          icon.appendChild(img);
+        };
+        
+        // Show first letter initially
+        icon.innerHTML = name.charAt(0).toUpperCase();
+        
+        // Try to load icon
+        setTimeout(() => {
+          icon.appendChild(img);
+        }, 100);
+
+        item.appendChild(label);
+        item.appendChild(btn);
+        item.appendChild(icon);
+        list.appendChild(item);
       });
+    }
+
+    // Start program
+    function startProgram(name) {
+      console.log(`Starting program: ${name}`);
+      
+      // Here you would normally load the program
+      // Example paths that could be tried:
+      const possiblePaths = [
+        `./programms/${name}/index.html`,
+        `./programms/${name}/${name.toLowerCase()}.html`,
+        `./programms/${name}/main.html`
+      ];
+      
+      // For demo: Show alert
+      alert(`Program "${name}" is starting...`);
+      
+      // Later you could load the program in an iframe or new window:
+      // window.open(possiblePaths[0], '_blank');
+      // or display in a modal/overlay
+    }
+
+    // Show detailed errors
+    function showDetailedError(htmlMessage) {
+      const list = document.getElementById("programList");
+      list.innerHTML = ""; // Remove loading message
+      
+      const errorDiv = document.createElement("div");
+      errorDiv.className = "error-message";
+      errorDiv.innerHTML = htmlMessage;
+      
+      // Add reload button
+      const reloadBtn = document.createElement("button");
+      reloadBtn.textContent = "Try Again";
+      reloadBtn.style.marginTop = "15px";
+      reloadBtn.style.padding = "10px 20px";
+      reloadBtn.style.backgroundColor = "#007bff";
+      reloadBtn.style.color = "white";
+      reloadBtn.style.border = "none";
+      reloadBtn.style.borderRadius = "5px";
+      reloadBtn.style.cursor = "pointer";
+      reloadBtn.onclick = () => {
+        list.innerHTML = '<div class="loading-message">Loading programs...</div>';
+        loadPrograms();
+      };
+      
+      errorDiv.appendChild(reloadBtn);
+      list.appendChild(errorDiv);
+    }
+
+    // Show simple errors
+    function showError(message) {
+      const list = document.getElementById("programList");
+      const errorDiv = document.createElement("div");
+      errorDiv.className = "error-message";
+      errorDiv.textContent = message;
+      list.prepend(errorDiv);
+    }
+
+    // Load programs when page loads
+    document.addEventListener('DOMContentLoaded', loadPrograms);
   </script>
 
 </body>
