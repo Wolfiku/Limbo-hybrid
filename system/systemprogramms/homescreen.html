@@ -7,22 +7,25 @@
 <style>
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
-.sidebar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column; align-items: stretch; overflow-y: auto; }
+.sidebar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column; align-items: stretch; overflow-y: auto; transition: opacity 0.5s ease, transform 0.5s ease; }
+.sidebar.hidden { opacity: 0; transform: scale(0.95); }
 .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .header .title { font-size: 1.2rem; }
 .header .time { font-size: 1rem; color: #ccc; }
 .program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
-.program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s; cursor: pointer; }
+.program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s, transform 0.3s; cursor: pointer; }
 .program-item.uploaded { border: 2px solid yellow; }
-.program-item:hover, .program-item.active { background: #333; }
+.program-item:hover, .program-item.active { background: #333; transform: scale(1.02); }
 .program-name { flex-grow: 1; font-size: 1.1rem; }
 .program-icon img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
 .program-icon { width: 32px; height: 32px; border-radius: 6px; margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; overflow: hidden; }
-.player-frame { display: none; width: 100%; height: 100%; border: none; background: #000; position: fixed; top: 0; left: 0; z-index: 100; }
-.exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; z-index: 101; }
+.player-frame { display: none; width: 100%; height: 100%; border: none; background: #000; position: fixed; top: 0; left: 0; z-index: 100; animation: fadeIn 0.5s ease; }
+.exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; z-index: 101; transition: all 0.5s ease; overflow: hidden; white-space: nowrap; }
+.exit-btn.minimized { width: 40px; padding: 10px; text-align: center; }
 .exit-btn:hover { background: #c00; }
-.upload-btn { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: #0a0; color: #fff; border: none; border-radius: 50%; font-size: 2rem; cursor: pointer; z-index: 102; display: flex; align-items: center; justify-content: center; }
-.upload-btn:hover { background: #0c0; }
+.upload-btn { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: #0a0; color: #fff; border: none; border-radius: 50%; font-size: 2rem; cursor: pointer; z-index: 102; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; }
+.upload-btn:hover { background: #0c0; transform: scale(1.1); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -64,12 +67,17 @@ function loadProgram(item, url) {
 try {
 document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
 item.classList.add('active');
-document.getElementById('sidebar').style.display = 'none';
+document.getElementById('sidebar').classList.add('hidden');
 const iframe = document.getElementById('playerFrame');
 iframe.style.display = 'block';
 iframe.src = url;
-document.getElementById('exitBtn').style.display = 'block';
+const exitBtn = document.getElementById('exitBtn');
+exitBtn.style.display = 'block';
 document.getElementById('uploadBtn').style.display = 'none';
+setTimeout(() => {
+exitBtn.classList.add('minimized');
+exitBtn.textContent = '✖';
+}, 2000);
 } catch (error) {
 alert('Error loading program. Please try again.');
 console.error(error);
@@ -80,8 +88,10 @@ document.querySelectorAll('.program-item').forEach(el => el.classList.remove('ac
 const iframe = document.getElementById('playerFrame');
 iframe.style.display = 'none';
 iframe.src = '';
-document.getElementById('sidebar').style.display = 'flex';
+document.getElementById('sidebar').classList.remove('hidden');
 document.getElementById('exitBtn').style.display = 'none';
+document.getElementById('exitBtn').classList.remove('minimized');
+document.getElementById('exitBtn').textContent = 'Exit Program';
 document.getElementById('uploadBtn').style.display = 'flex';
 });
 document.getElementById('uploadBtn').addEventListener('click', () => {
@@ -91,7 +101,7 @@ input.accept = '.html';
 input.multiple = false;
 input.onchange = e => {
 const file = e.target.files[0];
-if (file) {
+if (file && file.name.endsWith('.html')) {
 const reader = new FileReader();
 reader.onload = () => {
 try {
@@ -99,7 +109,7 @@ const blob = new Blob([reader.result], { type: 'text/html' });
 const url = URL.createObjectURL(blob);
 const item = document.createElement("div");
 item.className = "program-item uploaded";
-item.innerHTML = `<div class='program-name'>${file.name}</div><div class='program-icon'>U</div>`;
+item.innerHTML = `<div class='program-name'>${file.name}</div><div class='program-icon' style='color: yellow;'>#</div>`;
 item.addEventListener('click', () => loadProgram(item, url));
 document.getElementById('programList').appendChild(item);
 } catch (error) {
@@ -108,6 +118,8 @@ console.error(error);
 }
 };
 reader.readAsText(file);
+} else {
+alert('Please upload a valid HTML file.');
 }
 };
 input.click();
