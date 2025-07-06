@@ -1,127 +1,118 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Limbo Hybrid – Homescreen</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
-    body.program-active .sidebar { display: none; }
-    .sidebar {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%; padding: 20px;
-      background: #111; display: flex; flex-direction: column;
-      align-items: stretch; overflow-y: auto;
-    }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .header .title { font-size: 1.2rem; }
-    .header .time { font-size: 1rem; color: #ccc; }
-    .program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
-    .program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s; cursor: pointer; }
-    .program-item.uploaded { border: 2px solid yellow; }
-    .program-item:hover, .program-item.active { background: #333; }
-    .program-name { flex-grow: 1; font-size: 1.1rem; }
-    .program-icon img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
-    .program-icon { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; overflow: hidden; }
-    .player-frame { display: none; width: 100%; height: 100%; border: none; background: #000; position: fixed; top: 0; left: 0; z-index: 100; }
-    .exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; z-index: 101; }
-    .exit-btn:hover { background: #c00; }
-    .upload-btn { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: #0a0; color: #fff; border: none; border-radius: 50%; font-size: 2rem; cursor: pointer; z-index: 102; display: flex; align-items: center; justify-content: center; }
-    .upload-btn:hover { background: #0c0; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Limbo Hybrid – Homescreen</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
+.sidebar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column; align-items: stretch; overflow-y: auto; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header .title { font-size: 1.2rem; }
+.header .time { font-size: 1rem; color: #ccc; }
+.program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+.program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s; cursor: pointer; }
+.program-item.uploaded { border: 2px solid yellow; }
+.program-item:hover, .program-item.active { background: #333; }
+.program-name { flex-grow: 1; font-size: 1.1rem; }
+.program-icon img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; }
+.program-icon { width: 32px; height: 32px; border-radius: 6px; margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; overflow: hidden; }
+.player-frame { display: none; width: 100%; height: 100%; border: none; background: #000; position: fixed; top: 0; left: 0; z-index: 100; }
+.exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; z-index: 101; }
+.exit-btn:hover { background: #c00; }
+.upload-btn { position: fixed; bottom: 20px; left: 20px; width: 50px; height: 50px; background: #0a0; color: #fff; border: none; border-radius: 50%; font-size: 2rem; cursor: pointer; z-index: 102; display: flex; align-items: center; justify-content: center; }
+.upload-btn:hover { background: #0c0; }
+</style>
 </head>
 <body>
-  <div class="sidebar" id="sidebar">
-    <div class="header">
-      <div class="title">Limbo Hybrid</div>
-      <div class="time" id="time">--:--:--</div>
-    </div>
-    <div class="program-list" id="programList"></div>
-  </div>
-  <iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
-  <button id="exitBtn" class="exit-btn">Programm verlassen</button>
-  <button id="uploadBtn" class="upload-btn">+</button>
-
-  <script>
-    const programConfig = {
-      clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
-      "Colorfull Pallets": { name: "Colorfull Pallets", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
-      Storywrighter: { name: "Storywrighter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
-      "Qr-Maker": { name: "Qr-Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
-      Dynamic: { name: "Dynamic", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
-    };
-
-    function updateTime() {
-      const now = new Date();
-      document.getElementById("time").textContent = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    function showPrograms() {
-      const list = document.getElementById("programList");
-      Object.values(programConfig).forEach(config => {
-        const item = document.createElement("div");
-        item.className = "program-item";
-        item.innerHTML = `<div class='program-name'>${config.name}</div><div class='program-icon'><img src='${config.iconPath}' alt='${config.name}'></div>`;
-        item.addEventListener('click', () => loadProgram(item, config.launchPath));
-        list.appendChild(item);
-      });
-
-      const uploaded = JSON.parse(localStorage.getItem('uploadedPrograms') || '[]');
-      uploaded.forEach(file => {
-        const item = document.createElement("div");
-        item.className = "program-item uploaded";
-        item.innerHTML = `<div class='program-name'>${file.name}</div><div class='program-icon'>U</div>`;
-        item.addEventListener('click', () => loadProgram(item, file.url));
-        list.appendChild(item);
-      });
-    }
-
-    function loadProgram(item, url) {
-      document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
-      item.classList.add('active');
-      document.getElementById('sidebar').style.display = 'none';
-      const iframe = document.getElementById('playerFrame');
-      iframe.style.display = 'block';
-      iframe.src = url;
-      document.getElementById('exitBtn').style.display = 'block';
-    }
-
-    document.getElementById('exitBtn').addEventListener('click', () => {
-      document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
-      const iframe = document.getElementById('playerFrame');
-      iframe.style.display = 'none';
-      iframe.src = '';
-      document.getElementById('sidebar').style.display = 'flex';
-      document.getElementById('exitBtn').style.display = 'none';
-    });
-
-    document.getElementById('uploadBtn').addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.html';
-      input.multiple = false;
-      input.onchange = async e => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const blob = new Blob([reader.result], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const uploaded = JSON.parse(localStorage.getItem('uploadedPrograms') || '[]');
-            uploaded.push({ name: file.name, url });
-            localStorage.setItem('uploadedPrograms', JSON.stringify(uploaded));
-            location.reload();
-          };
-          reader.readAsText(file);
-        }
-      };
-      input.click();
-    });
-
-    document.addEventListener('DOMContentLoaded', showPrograms);
-  </script>
+<div class="sidebar" id="sidebar">
+<div class="header">
+<div class="title">Limbo Hybrid</div>
+<div class="time" id="time">--:--:--</div>
+</div>
+<div class="program-list" id="programList"></div>
+</div>
+<iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
+<button id="exitBtn" class="exit-btn">Exit Program</button>
+<button id="uploadBtn" class="upload-btn">+</button>
+<script>
+const programConfig = {
+clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
+"Colorful Palettes": { name: "Colorful Palettes", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
+Storywriter: { name: "Storywriter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
+"QR Maker": { name: "QR Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
+"Dynamic Notes": { name: "Dynamic Notes", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
+};
+function updateTime() {
+const now = new Date();
+document.getElementById("time").textContent = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+}
+setInterval(updateTime, 1000);
+updateTime();
+function showPrograms() {
+const list = document.getElementById("programList");
+Object.values(programConfig).forEach(config => {
+const item = document.createElement("div");
+item.className = "program-item";
+item.innerHTML = `<div class='program-name'>${config.name}</div><div class='program-icon'><img src='${config.iconPath}' alt='${config.name}'></div>`;
+item.addEventListener('click', () => loadProgram(item, config.launchPath));
+list.appendChild(item);
+});
+}
+function loadProgram(item, url) {
+try {
+document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+item.classList.add('active');
+document.getElementById('sidebar').style.display = 'none';
+const iframe = document.getElementById('playerFrame');
+iframe.style.display = 'block';
+iframe.src = url;
+document.getElementById('exitBtn').style.display = 'block';
+document.getElementById('uploadBtn').style.display = 'none';
+} catch (error) {
+alert('Error loading program. Please try again.');
+console.error(error);
+}
+}
+document.getElementById('exitBtn').addEventListener('click', () => {
+document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+const iframe = document.getElementById('playerFrame');
+iframe.style.display = 'none';
+iframe.src = '';
+document.getElementById('sidebar').style.display = 'flex';
+document.getElementById('exitBtn').style.display = 'none';
+document.getElementById('uploadBtn').style.display = 'flex';
+});
+document.getElementById('uploadBtn').addEventListener('click', () => {
+const input = document.createElement('input');
+input.type = 'file';
+input.accept = '.html';
+input.multiple = false;
+input.onchange = e => {
+const file = e.target.files[0];
+if (file) {
+const reader = new FileReader();
+reader.onload = () => {
+try {
+const blob = new Blob([reader.result], { type: 'text/html' });
+const url = URL.createObjectURL(blob);
+const item = document.createElement("div");
+item.className = "program-item uploaded";
+item.innerHTML = `<div class='program-name'>${file.name}</div><div class='program-icon'>U</div>`;
+item.addEventListener('click', () => loadProgram(item, url));
+document.getElementById('programList').appendChild(item);
+} catch (error) {
+alert('Error uploading program. Please try again.');
+console.error(error);
+}
+};
+reader.readAsText(file);
+}
+};
+input.click();
+});
+document.addEventListener('DOMContentLoaded', showPrograms);
+</script>
 </body>
 </html>
