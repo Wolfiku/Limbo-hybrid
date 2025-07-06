@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Limbo Hybrid – Homescreen</title>
   <style>
     * {
@@ -68,6 +68,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1.2rem;
+      color: white;
     }
 
     .program-item button {
@@ -84,26 +85,6 @@
     .program-item button:hover {
       background: #ddd;
     }
-
-    .error-message, .missing-programs {
-      color: #ff6b6b;
-      background: #331;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      border-left: 4px solid #ff6b6b;
-    }
-
-    .missing-programs h3 {
-      color: #ff8c8c;
-      margin-top: 0;
-    }
-
-    .loading-message {
-      color: #ccc;
-      text-align: center;
-      padding: 20px;
-    }
   </style>
 </head>
 <body>
@@ -113,104 +94,64 @@
     <div class="time" id="time">--:--:--</div>
   </div>
 
-  <div class="program-list" id="programList">
-    <div class="loading-message">Programme werden geladen...</div>
-  </div>
+  <div class="program-list" id="programList"></div>
 
   <script>
+    // Programmdaten
     const programConfig = {
       "clock": {
         name: "Clock",
-        htmlPath: "programms/clock/clock.html",
-        iconPath: "programms/clock/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/clock/icon/icon.png"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        htmlPath: "programms/Colorfull Pallets/Colorfull Palets.html",
-        iconPath: "programms/Colorfull Pallets/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        htmlPath: "programms/Storywrighter/Storywrighter.html",
-        iconPath: "programms/Storywrighter/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        htmlPath: "programms/Qr-Maker/Qr Code Generator.html",
-        iconPath: "programms/Qr-Maker/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
       },
       "Dynamic": {
         name: "Dynamic",
-        htmlPath: "programms/Dynamic/Dynamic Notes.html",
-        iconPath: "programms/Dynamic/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
       }
     };
 
-    const requiredPrograms = Object.keys(programConfig);
-
+    // Uhrzeit aktualisieren
     function updateTime() {
       const now = new Date();
-      document.getElementById("time").textContent = now.toLocaleTimeString();
+      const timeStr = now.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      document.getElementById("time").textContent = timeStr;
     }
-
-    setInterval(updateTime, 1000);
     updateTime();
+    setInterval(updateTime, 1000);
 
-    async function checkProgramExists(programId) {
-      const config = programConfig[programId];
-      try {
-        const response = await fetch(config.htmlPath, { method: "HEAD" });
-        return response.ok;
-      } catch (err) {
-        return false;
-      }
-    }
-
-    async function loadPrograms() {
-      const list = document.getElementById("programList");
-      list.innerHTML = "";
-
-      const availablePrograms = [];
-      const missingPrograms = [];
-
-      for (const programId of requiredPrograms) {
-        const exists = await checkProgramExists(programId);
-        if (exists) {
-          availablePrograms.push(programId);
-        } else {
-          missingPrograms.push(programId);
-        }
-      }
-
-      if (availablePrograms.length > 0) {
-        displayPrograms(availablePrograms);
-      }
-
-      if (missingPrograms.length > 0) {
-        showMissingPrograms(missingPrograms);
-      }
-
-      if (availablePrograms.length === 0) {
-        showNoPrograms();
-      }
-    }
-
-    function displayPrograms(programIds) {
+    // Programme anzeigen
+    function showPrograms() {
       const list = document.getElementById("programList");
 
-      programIds.forEach(programId => {
-        const config = programConfig[programId];
+      Object.keys(programConfig).forEach(id => {
+        const config = programConfig[id];
+
         const item = document.createElement("div");
         item.className = "program-item";
 
-        const label = document.createElement("div");
-        label.className = "program-name";
-        label.textContent = config.name;
+        const name = document.createElement("div");
+        name.className = "program-name";
+        name.textContent = config.name;
 
         const btn = document.createElement("button");
         btn.textContent = "Starten";
         btn.onclick = () => {
-          alert(`Programm "${config.name}" wird gestartet...`);
+          alert(`Programm "${config.name}" gestartet.`);
         };
 
         const icon = document.createElement("div");
@@ -220,56 +161,35 @@
         img.alt = config.name;
         img.style.width = "100%";
         img.style.height = "100%";
+        img.style.objectFit = "cover";
         img.style.borderRadius = "8px";
-        img.onerror = () => {
-          icon.innerHTML = config.name.charAt(0).toUpperCase();
-        };
-        icon.appendChild(img);
 
-        item.appendChild(label);
+        img.onerror = () => {
+          icon.textContent = config.name.charAt(0).toUpperCase();
+        };
+
+        img.onload = () => {
+          icon.innerHTML = "";
+          icon.appendChild(img);
+        };
+
+        // Standardanzeige (wenn Bild noch nicht geladen)
+        icon.textContent = config.name.charAt(0).toUpperCase();
+
+        // Bild trotzdem versuchen zu laden
+        setTimeout(() => {
+          icon.appendChild(img);
+        }, 100);
+
+        item.appendChild(name);
         item.appendChild(btn);
         item.appendChild(icon);
         list.appendChild(item);
       });
     }
 
-    function showMissingPrograms(missing) {
-      const list = document.getElementById("programList");
-      const div = document.createElement("div");
-      div.className = "missing-programs";
-
-      const title = document.createElement("h3");
-      title.textContent = "⚠️ Fehlende Programme";
-      div.appendChild(title);
-
-      const ul = document.createElement("ul");
-      missing.forEach(id => {
-        const config = programConfig[id];
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <strong>${config.name}</strong><br>
-          Datei: <code>${config.htmlPath}</code><br>
-          Icon: <code>${config.iconPath}</code>
-        `;
-        ul.appendChild(li);
-      });
-
-      div.appendChild(ul);
-      list.appendChild(div);
-    }
-
-    function showNoPrograms() {
-      const list = document.getElementById("programList");
-      const div = document.createElement("div");
-      div.className = "error-message";
-      div.innerHTML = `
-        <strong>Keine Programme gefunden!</strong><br><br>
-        Stelle sicher, dass alle Dateien und Ordner vorhanden sind und korrekt benannt wurden.
-      `;
-      list.appendChild(div);
-    }
-
-    document.addEventListener("DOMContentLoaded", loadPrograms);
+    document.addEventListener("DOMContentLoaded", showPrograms);
   </script>
+
 </body>
 </html>
