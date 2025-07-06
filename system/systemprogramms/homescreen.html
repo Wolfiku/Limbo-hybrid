@@ -1,145 +1,82 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Limbo Hybrid – Homescreen</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 20px;
-      background-color: #000;
+      background: #000;
       color: #fff;
       font-family: sans-serif;
     }
-
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
     }
-
-    .header .title {
-      font-size: 1.2rem;
-    }
-
-    .header .time {
-      font-size: 1rem;
-      color: #ccc;
-      font-family: monospace;
-    }
-
+    .header .title { font-size: 1.2rem; }
+    .header .time { font-size: 1rem; color: #ccc; }
     .program-list {
       display: flex;
       flex-direction: column;
       gap: 15px;
-      max-width: 500px;
-      margin: 0 auto;
+      max-width: 600px;
+      margin: auto;
     }
-
     .program-item {
       display: flex;
       align-items: center;
       background: #111;
       border-radius: 12px;
-      padding: 10px 15px;
+      padding: 10px;
       transition: background 0.3s;
     }
-
-    .program-item:hover {
-      background: #222;
-    }
-
-    .program-name {
-      flex-grow: 1;
-      font-size: 1.1rem;
-    }
-
+    .program-item:hover { background: #222; }
+    .program-name { flex: 1; font-size: 1.1rem; }
     .program-icon {
-      width: 48px;
-      height: 48px;
+      width: 48px; height: 48px;
       border-radius: 8px;
       background: #333;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
       margin-left: 10px;
       overflow: hidden;
+      font-size: 1.2rem;
+      color: #fff;
       flex-shrink: 0;
     }
-
     .program-icon img {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       object-fit: cover;
-      border-radius: 8px;
-      display: block;
     }
-
     .program-item button {
-      padding: 6px 15px;
-      font-size: 0.9rem;
-      background: white;
-      color: black;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
       margin-right: 10px;
+      padding: 6px 12px;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
       flex-shrink: 0;
     }
-
-    .program-item button:hover {
-      background: #ddd;
-    }
-
+    .program-item button:hover { background: #ddd; }
     .error-message {
-      color: #ff6b6b;
-      background: #331;
-      padding: 15px;
-      border-radius: 8px;
-      margin: 20px 0;
-      line-height: 1.6;
-      border-left: 4px solid #ff6b6b;
+      background: #331; color: #f66;
+      padding: 15px; border-radius: 8px;
+      margin-top: 20px; border-left: 4px solid #f66;
     }
-
-    .error-message pre {
-      background: #222;
-      padding: 10px;
-      border-radius: 4px;
-      overflow-x: auto;
-      font-size: 0.9rem;
-      margin: 10px 0;
-    }
-
-    .error-message strong {
-      color: #ff8c8c;
-    }
-
-    .loading-message {
-      color: #ccc;
-      text-align: center;
-      padding: 20px;
-    }
-
     .missing-programs {
-      color: #ff6b6b;
-      background: #331;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      border-left: 4px solid #ff6b6b;
+      background: #331; color: #f66;
+      padding: 15px; border-radius: 8px;
+      margin-top: 20px; border-left: 4px solid #f66;
     }
-
-    .missing-programs h3 {
-      color: #ff8c8c;
-      margin-top: 0;
-    }
+    .missing-programs h3 { margin: 0 0 10px; }
   </style>
 </head>
 <body>
@@ -149,226 +86,83 @@
   </div>
 
   <div class="program-list" id="programList">
-    <div class="loading-message">Loading programs...</div>
+    <div class="loading-message">Programme werden geladen...</div>
   </div>
 
   <script>
-    // Program configuration (Passe hier die Pfade ggf. an)
+    // Programme und ihre Icons (In jedem Ordner /programms/<id>/icon/icon.png)
     const programConfig = {
-      "clock": {
-        name: "Clock",
-        htmlPath: "programms/clock/clock.html",
-        iconPath: "programms/clock/icon/icon.png"
-      },
-      "Colorfull Pallets": {
-        name: "Colorfull Pallets",
-        htmlPath: "programms/Colorfull Pallets/Colorfull Palets.html",
-        iconPath: "programms/Colorfull Pallets/icon/icon.png"
-      },
-      "Storywrighter": {
-        name: "Storywrighter",
-        htmlPath: "programms/Storywrighter/Storywrighter.html",
-        iconPath: "programms/Storywrighter/icon/icon.png"
-      },
-      "Qr-Maker": {
-        name: "Qr-Maker",
-        htmlPath: "programms/Qr-Maker/Qr Code Generator.html",
-        iconPath: "programms/Qr-Maker/icon/icon.png"
-      },
-      "Dynamic": {
-        name: "Dynamic",
-        htmlPath: "programms/Dynamic/Dynamic Notes.html",
-        iconPath: "programms/Dynamic/icon/icon.png"
-      }
+      clock:       { name: "Clock",       path: "programms/clock/",         icon: "programms/clock/icon/icon.png" },
+      Dynamic:     { name: "Dynamic",     path: "programms/Dynamic/",       icon: "programms/Dynamic/icon/icon.png" },
+      Storywrighter:{ name: "Storywrighter", path: "programms/Storywrighter/", icon: "programms/Storywrighter/icon/icon.png" },
+      "Colorfull Pallets":{ name:"Colorfull Pallets", path:"programms/Colorfull Pallets/", icon:"programms/Colorfull Pallets/icon/icon.png" },
+      "Qr-Maker":  { name: "Qr-Maker",    path: "programms/Qr-Maker/",      icon: "programms/Qr-Maker/icon/icon.png" }
     };
 
-    const requiredPrograms = Object.keys(programConfig);
-
-    // Uhrzeit anzeigen und jede Sekunde aktualisieren
+    // Uhrzeit
     function updateTime() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      });
-      document.getElementById("time").textContent = timeStr;
+      document.getElementById("time").textContent =
+        now.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
     }
-    updateTime();
-    setInterval(updateTime, 1000);
+    updateTime(); setInterval(updateTime,1000);
 
-    // Prüfe, ob ein Programm-Ordner existiert (prüft nur Ordner-Haupt-HTML, nicht Icons)
-    async function checkProgramExists(programId) {
-      const config = programConfig[programId];
-      if (!config) return false;
+    // Check Ordner exist (HEAD auf index.html in diesem Ordner)
+    async function folderExists(cfg) {
       try {
-        const response = await fetch(config.htmlPath, { method: 'HEAD' });
-        return response.ok;
+        const res = await fetch(cfg.path + cfg.name + ".html", { method: "HEAD" });
+        return res.ok;
       } catch {
         return false;
       }
     }
 
-    // Programme laden und anzeigen
+    // Laden
     async function loadPrograms() {
       const list = document.getElementById("programList");
       list.innerHTML = "";
+      const missing = [];
 
-      const availablePrograms = [];
-      const missingPrograms = [];
-
-      for (const programId of requiredPrograms) {
-        const exists = await checkProgramExists(programId);
-        if (exists) {
-          availablePrograms.push(programId);
-          console.log(`✓ Program found: ${programId}`);
-        } else {
-          missingPrograms.push(programId);
-          console.warn(`✗ Program missing: ${programId}`);
+      for (let id in programConfig) {
+        const cfg = programConfig[id];
+        if (!await folderExists(cfg)) {
+          missing.push(cfg.name + ` (${cfg.path})`);
+          continue;
         }
-      }
-
-      if (availablePrograms.length > 0) {
-        displayPrograms(availablePrograms);
-      }
-
-      if (missingPrograms.length > 0) {
-        showMissingPrograms(missingPrograms);
-      }
-
-      if (availablePrograms.length === 0) {
-        showNoPrograms();
-      }
-    }
-
-    // Programme anzeigen mit Icon + Name + Button
-    function displayPrograms(programIds) {
-      const list = document.getElementById("programList");
-
-      programIds.forEach(programId => {
-        const config = programConfig[programId];
         const item = document.createElement("div");
         item.className = "program-item";
 
+        const btn = document.createElement("button");
+        btn.textContent = "Starten";
+        btn.onclick = ()=>alert(`Starte ${cfg.name}`);
+
         const label = document.createElement("div");
         label.className = "program-name";
-        label.textContent = config.name;
+        label.textContent = cfg.name;
 
-        const btn = document.createElement("button");
-        btn.textContent = "Launch";
-        btn.onclick = () => {
-          startProgram(programId);
-        };
+        const iconBox = document.createElement("div");
+        iconBox.className = "program-icon";
+        const img = new Image();
+        img.src = cfg.icon;
+        img.onload = ()=>{ iconBox.textContent=""; iconBox.appendChild(img); };
+        img.onerror=()=>{ iconBox.textContent=cfg.name.charAt(0); };
+        iconBox.textContent = cfg.name.charAt(0);
 
-        const icon = document.createElement("div");
-        icon.className = "program-icon";
-
-        const img = document.createElement("img");
-        img.src = config.iconPath;
-        img.alt = `${config.name} Icon`;
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "8px";
-
-        img.onerror = () => {
-          icon.textContent = config.name.charAt(0).toUpperCase();
-          icon.style.fontSize = "1.5rem";
-          icon.style.fontWeight = "bold";
-          icon.style.background = "#444";
-        };
-
-        img.onload = () => {
-          icon.textContent = "";
-          icon.appendChild(img);
-        };
-
-        // Icon sofort anhängen
-        icon.appendChild(img);
-
-        item.appendChild(label);
-        item.appendChild(btn);
-        item.appendChild(icon);
+        item.append(label,btn,iconBox);
         list.appendChild(item);
-      });
+      }
+
+      if (missing.length) {
+        const div = document.createElement("div");
+        div.className = "missing-programs";
+        div.innerHTML = "<h3>Missing Program Folders</h3><ul>" +
+          missing.map(m=>`<li>${m}</li>`).join("") +
+          "</ul>";
+        list.appendChild(div);
+      }
     }
 
-    // Programm starten (hier nur Beispiel-Alert)
-    function startProgram(programId) {
-      const config = programConfig[programId];
-      alert(`Program "${config.name}" is starting...\nPath: ${config.htmlPath}`);
-      // Hier kannst du deine Logik einbauen, z.B. iframe laden oder Vollbild öffnen
-    }
-
-    // Fehlermeldung bei fehlenden Programmen
-    function showMissingPrograms(missingPrograms) {
-      const list = document.getElementById("programList");
-
-      const missingDiv = document.createElement("div");
-      missingDiv.className = "missing-programs";
-
-      const title = document.createElement("h3");
-      title.textContent = "⚠️ Missing Required Programs";
-      missingDiv.appendChild(title);
-
-      const description = document.createElement("p");
-      description.textContent = "The following essential programs are missing and need to be installed:";
-      missingDiv.appendChild(description);
-
-      const programList = document.createElement("ul");
-      missingPrograms.forEach(programId => {
-        const config = programConfig[programId];
-        const listItem = document.createElement("li");
-        listItem.innerHTML = `<strong>${config ? config.name : programId}</strong><br>Expected at: <code>${config ? config.htmlPath : 'N/A'}</code>`;
-        programList.appendChild(listItem);
-      });
-      missingDiv.appendChild(programList);
-
-      const solution = document.createElement("p");
-      solution.innerHTML = `<strong>Solutions:</strong><br>
-        • Check if the program files exist at the specified paths<br>
-        • Verify folder and file names match exactly (case-sensitive)<br>
-        • Ensure you're running from a local server (not file:// protocol)<br>
-        • Check file permissions`;
-      missingDiv.appendChild(solution);
-
-      list.appendChild(missingDiv);
-    }
-
-    // Fehlermeldung wenn gar keine Programme gefunden wurden
-    function showNoPrograms() {
-      const list = document.getElementById("programList");
-
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "error-message";
-      errorDiv.innerHTML = `<strong>No programs found!</strong><br><br>
-        <strong>Problem:</strong> None of the required programs could be found<br><br>
-        <strong>Required programs:</strong><br>
-        ${requiredPrograms.map(id => `• ${programConfig[id].name} (${programConfig[id].htmlPath})`).join('<br>')}<br><br>
-        <strong>Solutions:</strong><br>
-        • Make sure you have the correct folder structure<br>
-        • Use a local web server (Live Server, http-server, etc.)<br>
-        • Check that all program files exist<br>
-        • Verify file and folder names are correct`;
-
-      const reloadBtn = document.createElement("button");
-      reloadBtn.textContent = "Try Again";
-      reloadBtn.style.marginTop = "15px";
-      reloadBtn.style.padding = "10px 20px";
-      reloadBtn.style.backgroundColor = "#007bff";
-      reloadBtn.style.color = "white";
-      reloadBtn.style.border = "none";
-      reloadBtn.style.borderRadius = "5px";
-      reloadBtn.style.cursor = "pointer";
-      reloadBtn.onclick = () => {
-        list.innerHTML = '<div class="loading-message">Loading programs...</div>';
-        loadPrograms();
-      };
-
-      errorDiv.appendChild(reloadBtn);
-      list.appendChild(errorDiv);
-    }
-
-    // Start
-    document.addEventListener('
+    document.addEventListener("DOMContentLoaded", loadPrograms);
+  </script>
+</body>
+</html>
