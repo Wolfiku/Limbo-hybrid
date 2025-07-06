@@ -108,28 +108,23 @@
     const programConfig = {
       "clock": {
         name: "Clock",
-        iconPath: "../../Programms/clock/icon/icon.png",
-        fallbackIcon: "🕒"
+        iconPath: "../../Programms/clock/icon/icon.png"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        iconPath: "../../Programms/Colorfull Pallets/icon/icon.png",
-        fallbackIcon: "🎨"
+        iconPath: "../../Programms/Colorfull Pallets/icon/icon.png"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        iconPath: "../../Programms/Storywrighter/icon/icon.png",
-        fallbackIcon: "📝"
+        iconPath: "../../Programms/Storywrighter/icon/icon.png"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        iconPath: "../../Programms/Qr-Maker/icon/icon.png",
-        fallbackIcon: "📱"
+        iconPath: "../../Programms/Qr-Maker/icon/icon.png"
       },
       "Dynamic": {
         name: "Dynamic",
-        iconPath: "../../Programms/Dynamic/icon/icon.png",
-        fallbackIcon: "⚡"
+        iconPath: "../../Programms/Dynamic/icon/icon.png"
       }
     };
 
@@ -169,8 +164,8 @@
         const icon = document.createElement("div");
         icon.className = "program-icon";
         
-        // Zuerst Emoji-Icon anzeigen als besseren Fallback
-        icon.textContent = config.fallbackIcon || config.name.charAt(0).toUpperCase();
+        // Zuerst Buchstaben-Platzhalter anzeigen
+        icon.textContent = config.name.charAt(0).toUpperCase();
 
         // Bild laden
         const img = document.createElement("img");
@@ -178,19 +173,20 @@
         img.alt = config.name;
 
         // Debug: Bildpfad in der Konsole anzeigen
-        console.log(`Versuche Bild zu laden: ${config.iconPath}`);
+        console.log(`Attempting to load icon: ${config.iconPath}`);
 
         // Wenn Bild erfolgreich geladen wird, ersetze den Platzhalter
         img.onload = () => {
-          console.log(`✅ Bild erfolgreich geladen: ${config.iconPath}`);
+          console.log(`✅ Icon loaded successfully: ${config.iconPath}`);
           icon.innerHTML = "";
           icon.appendChild(img);
         };
 
         // Wenn Bild nicht geladen werden kann, behalte den Platzhalter
         img.onerror = () => {
-          console.log(`❌ Icon für ${config.name} konnte nicht geladen werden: ${config.iconPath}`);
-          // Fallback auf Emoji bleibt bestehen
+          console.error(`❌ Failed to load icon for ${config.name}: ${config.iconPath}`);
+          console.error(`Error: Icon file not found or path incorrect`);
+          // Fallback auf Buchstaben bleibt bestehen
         };
 
         item.appendChild(name);
