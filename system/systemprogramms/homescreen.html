@@ -1,234 +1,200 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Limbo Hybrid – Homescreen</title>
   <style>
     * {
       box-sizing: border-box;
-    }body {
-  margin: 0;
-  padding: 20px;
-  background-color: #000;
-  color: #fff;
-  font-family: sans-serif;
-}
+    }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #000;
+      color: #fff;
+      font-family: sans-serif;
+    }
 
-.header .title {
-  font-size: 1.2rem;
-}
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
 
-.header .time {
-  font-size: 1rem;
-  color: #ccc;
-}
+    .header .title {
+      font-size: 1.2rem;
+    }
 
-.program-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
+    .header .time {
+      font-size: 1rem;
+      color: #ccc;
+    }
 
-.program-item {
-  display: flex;
-  align-items: center;
-  background: #111;
-  border-radius: 12px;
-  padding: 10px 15px;
-  transition: background 0.3s;
-}
+    .program-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
 
-.program-item:hover {
-  background: #222;
-}
+    .program-item {
+      display: flex;
+      align-items: center;
+      background: #111;
+      border-radius: 12px;
+      padding: 10px 15px;
+      transition: background 0.3s;
+    }
 
-.program-name {
-  flex-grow: 1;
-  font-size: 1.1rem;
-}
+    .program-item:hover {
+      background: #222;
+    }
 
-.program-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
-  object-fit: cover;
-  margin-left: 10px;
-  background: #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  overflow: hidden;
-}
+    .program-name {
+      flex-grow: 1;
+      font-size: 1.1rem;
+    }
 
-.program-item button {
-  padding: 6px 15px;
-  font-size: 0.9rem;
-  background: white;
-  color: black;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-right: 10px;
-}
+    .program-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-left: 10px;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
 
-.program-item button:hover {
-  background: #ddd;
-}
+    .program-item button {
+      padding: 6px 15px;
+      font-size: 0.9rem;
+      background: white;
+      color: black;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
 
-.error-message {
-  color: #ff6b6b;
-  background: #331;
-  padding: 15px;
-  border-radius: 8px;
-  margin: 20px 0;
-  line-height: 1.6;
-  border-left: 4px solid #ff6b6b;
-}
+    .program-item button:hover {
+      background: #ddd;
+    }
 
-.error-message pre {
-  background: #222;
-  padding: 10px;
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 0.9rem;
-  margin: 10px 0;
-}
+    .error-message, .missing-programs {
+      color: #ff6b6b;
+      background: #331;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #ff6b6b;
+    }
 
-.error-message strong {
-  color: #ff8c8c;
-}
+    .missing-programs h3 {
+      color: #ff8c8c;
+      margin-top: 0;
+    }
 
-.loading-message {
-  color: #ccc;
-  text-align: center;
-  padding: 20px;
-}
-
-.missing-programs {
-  color: #ff6b6b;
-  background: #331;
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 20px;
-  border-left: 4px solid #ff6b6b;
-}
-
-.missing-programs h3 {
-  color: #ff8c8c;
-  margin-top: 0;
-}
-
+    .loading-message {
+      color: #ccc;
+      text-align: center;
+      padding: 20px;
+    }
   </style>
 </head>
-<body>  <div class="header">
+<body>
+
+  <div class="header">
     <div class="title">Limbo Hybrid</div>
     <div class="time" id="time">--:--:--</div>
-  </div>  <div class="program-list" id="programList">
-    <div class="loading-message">Loading programs...</div>
-  </div>  <script>
-    // Program configuration with exact paths
+  </div>
+
+  <div class="program-list" id="programList">
+    <div class="loading-message">Programme werden geladen...</div>
+  </div>
+
+  <script>
     const programConfig = {
       "clock": {
         name: "Clock",
-        htmlPath: "Limbo-hybrid/programms/clock/clock.html",
-        iconPath: "Limbo-hybrid/programms/clock/icon/icon.png"
+        htmlPath: "programms/clock/clock.html",
+        iconPath: "programms/clock/icon/icon.png"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        htmlPath: "Limbo-hybrid/programms/Colorfull Pallets/Colorfull Palets.html",
-        iconPath: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
+        htmlPath: "programms/Colorfull Pallets/Colorfull Palets.html",
+        iconPath: "programms/Colorfull Pallets/icon/icon.png"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        htmlPath: "Limbo-hybrid/programms/Storywrighter/Storywrighter.html",
-        iconPath: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
+        htmlPath: "programms/Storywrighter/Storywrighter.html",
+        iconPath: "programms/Storywrighter/icon/icon.png"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        htmlPath: "Limbo-hybrid/programms/Qr-Maker/Qr%20Code%20Generator.html",
-        iconPath: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
+        htmlPath: "programms/Qr-Maker/Qr Code Generator.html",
+        iconPath: "programms/Qr-Maker/icon/icon.png"
       },
       "Dynamic": {
         name: "Dynamic",
-        htmlPath: "Limbo-hybrid/programms/Dynamic/Dynamic%20Notes.html",
-        iconPath: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
+        htmlPath: "programms/Dynamic/Dynamic Notes.html",
+        iconPath: "programms/Dynamic/icon/icon.png"
       }
     };
 
-    // Required programs that must be present
-    const requiredPrograms = ["clock", "Colorfull Pallets", "Storywrighter", "Qr-Maker", "Dynamic"];
+    const requiredPrograms = Object.keys(programConfig);
 
-    // Live time display
     function updateTime() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', {   
-        hour: '2-digit',   
-        minute: '2-digit',   
-        second: '2-digit'   
-      });
-      document.getElementById("time").textContent = timeStr;
+      document.getElementById("time").textContent = now.toLocaleTimeString();
     }
-    updateTime();
-    setInterval(updateTime, 1000);
 
-    // Check if program files exist
+    setInterval(updateTime, 1000);
+    updateTime();
+
     async function checkProgramExists(programId) {
       const config = programConfig[programId];
-      if (!config) return false;
-        
       try {
-        const response = await fetch(config.htmlPath, { method: 'HEAD' });
+        const response = await fetch(config.htmlPath, { method: "HEAD" });
         return response.ok;
       } catch (err) {
         return false;
       }
     }
 
-    // Load and verify programs
     async function loadPrograms() {
       const list = document.getElementById("programList");
-      list.innerHTML = ""; // Remove loading message
+      list.innerHTML = "";
 
       const availablePrograms = [];
       const missingPrograms = [];
 
-      // Check each required program
       for (const programId of requiredPrograms) {
         const exists = await checkProgramExists(programId);
         if (exists) {
           availablePrograms.push(programId);
-          console.log(`✓ Program found: ${programId}`);
         } else {
           missingPrograms.push(programId);
-          console.warn(`✗ Program missing: ${programId}`);
         }
       }
 
-      // Display available programs
       if (availablePrograms.length > 0) {
         displayPrograms(availablePrograms);
       }
 
-      // Show missing programs error at the bottom
       if (missingPrograms.length > 0) {
         showMissingPrograms(missingPrograms);
       }
 
-      // If no programs found at all
       if (availablePrograms.length === 0) {
         showNoPrograms();
       }
     }
 
-    // Display programs
     function displayPrograms(programIds) {
       const list = document.getElementById("programList");
 
@@ -242,42 +208,23 @@
         label.textContent = config.name;
 
         const btn = document.createElement("button");
-        btn.textContent = "Launch";
+        btn.textContent = "Starten";
         btn.onclick = () => {
-          startProgram(programId);
+          alert(`Programm "${config.name}" wird gestartet...`);
         };
 
         const icon = document.createElement("div");
         icon.className = "program-icon";
-          
-        // Try to load icon
         const img = document.createElement("img");
         img.src = config.iconPath;
-        img.alt = `${config.name} Icon`;
+        img.alt = config.name;
         img.style.width = "100%";
         img.style.height = "100%";
-        img.style.objectFit = "cover";
         img.style.borderRadius = "8px";
-          
-        // Fallback if icon cannot be loaded
         img.onerror = () => {
           icon.innerHTML = config.name.charAt(0).toUpperCase();
-          icon.style.fontSize = "1.5rem";
-          icon.style.fontWeight = "bold";
         };
-          
-        img.onload = () => {
-          icon.innerHTML = "";
-          icon.appendChild(img);
-        };
-          
-        // Show first letter initially
-        icon.innerHTML = config.name.charAt(0).toUpperCase();
-          
-        // Try to load icon
-        setTimeout(() => {
-          icon.appendChild(img);
-        }, 100);
+        icon.appendChild(img);
 
         item.appendChild(label);
         item.appendChild(btn);
@@ -286,101 +233,43 @@
       });
     }
 
-    // Start program
-    function startProgram(programId) {
-      const config = programConfig[programId];
-      console.log(`Starting program: ${config.name}`);
-      console.log(`HTML Path: ${config.htmlPath}`);
-        
-      // For now: Show alert (you said we'll implement this later)
-      alert(`Program "${config.name}" is starting...\n\nPath: ${config.htmlPath}`);
-        
-      // TODO: Implement actual program loading
-      // window.open(config.htmlPath, '_blank');
-      // or load in iframe/modal
-    }
-
-    // Show missing programs at the bottom
-    function showMissingPrograms(missingPrograms) {
+    function showMissingPrograms(missing) {
       const list = document.getElementById("programList");
-        
-      const missingDiv = document.createElement("div");
-      missingDiv.className = "missing-programs";
-        
+      const div = document.createElement("div");
+      div.className = "missing-programs";
+
       const title = document.createElement("h3");
-      title.textContent = "⚠️ Missing Required Programs";
-      missingDiv.appendChild(title);
-        
-      const description = document.createElement("p");
-      description.innerHTML = "The following essential programs are missing and need to be installed:";
-      missingDiv.appendChild(description);
-        
-      const programList = document.createElement("ul");
-      missingPrograms.forEach(programId => {
-        const config = programConfig[programId];
-        const listItem = document.createElement("li");
-        listItem.innerHTML = `
+      title.textContent = "⚠️ Fehlende Programme";
+      div.appendChild(title);
+
+      const ul = document.createElement("ul");
+      missing.forEach(id => {
+        const config = programConfig[id];
+        const li = document.createElement("li");
+        li.innerHTML = `
           <strong>${config.name}</strong><br>
-          Expected at: <code>${config.htmlPath}</code><br>
-          Icon at: <code>${config.iconPath}</code>
+          Datei: <code>${config.htmlPath}</code><br>
+          Icon: <code>${config.iconPath}</code>
         `;
-        programList.appendChild(listItem);
+        ul.appendChild(li);
       });
-      missingDiv.appendChild(programList);
-        
-      const solution = document.createElement("p");
-      solution.innerHTML = `
-        <strong>Solutions:</strong><br>
-        • Check if the program files exist at the specified paths<br>
-        • Verify folder and file names match exactly (case-sensitive)<br>
-        • Ensure you're running from a local server (not file:// protocol)<br>
-        • Check file permissions
-      `;
-      missingDiv.appendChild(solution);
-        
-      list.appendChild(missingDiv);
+
+      div.appendChild(ul);
+      list.appendChild(div);
     }
 
-    // Show error when no programs found
     function showNoPrograms() {
       const list = document.getElementById("programList");
-        
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "error-message";
-      errorDiv.innerHTML = `
-        <strong>No programs found!</strong><br><br>
-        <strong>Problem:</strong> None of the required programs could be found<br><br>
-        <strong>Required programs:</strong><br>
-        ${requiredPrograms.map(id => {
-          const config = programConfig[id];
-          return `• ${config.name} (${config.htmlPath})`;
-        }).join('<br>')}<br><br>
-        <strong>Solutions:</strong><br>
-        • Make sure you have the correct folder structure<br>
-        • Use a local web server (Live Server, http-server, etc.)<br>
-        • Check that all program files exist<br>
-        • Verify file and folder names are correct
+      const div = document.createElement("div");
+      div.className = "error-message";
+      div.innerHTML = `
+        <strong>Keine Programme gefunden!</strong><br><br>
+        Stelle sicher, dass alle Dateien und Ordner vorhanden sind und korrekt benannt wurden.
       `;
-        
-      const reloadBtn = document.createElement("button");
-      reloadBtn.textContent = "Try Again";
-      reloadBtn.style.marginTop = "15px";
-      reloadBtn.style.padding = "10px 20px";
-      reloadBtn.style.backgroundColor = "#007bff";
-      reloadBtn.style.color = "white";
-      reloadBtn.style.border = "none";
-      reloadBtn.style.borderRadius = "5px";
-      reloadBtn.style.cursor = "pointer";
-      reloadBtn.onclick = () => {
-        list.innerHTML = '<div class="loading-message">Loading programs...</div>';
-        loadPrograms();
-      };
-        
-      errorDiv.appendChild(reloadBtn);
-      list.appendChild(errorDiv);
+      list.appendChild(div);
     }
 
-    // Load programs when page loads
-    document.addEventListener('DOMContentLoaded', loadPrograms);
-  </script></body>
+    document.addEventListener("DOMContentLoaded", loadPrograms);
+  </script>
+</body>
 </html>
