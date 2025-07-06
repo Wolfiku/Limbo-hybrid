@@ -5,164 +5,194 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Limbo Hybrid – Homescreen</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 20px;
-      background: #000;
+      background-color: #000;
       color: #fff;
       font-family: sans-serif;
     }
+
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 30px;
     }
-    .header .title { font-size: 1.2rem; }
-    .header .time { font-size: 1rem; color: #ccc; }
+
+    .header .title {
+      font-size: 1.2rem;
+    }
+
+    .header .time {
+      font-size: 1rem;
+      color: #ccc;
+    }
+
     .program-list {
       display: flex;
       flex-direction: column;
       gap: 15px;
-      max-width: 600px;
-      margin: auto;
     }
+
     .program-item {
       display: flex;
       align-items: center;
       background: #111;
       border-radius: 12px;
-      padding: 10px;
+      padding: 10px 15px;
       transition: background 0.3s;
     }
-    .program-item:hover { background: #222; }
-    .program-name { flex: 1; font-size: 1.1rem; }
+
+    .program-item:hover {
+      background: #222;
+    }
+
+    .program-name {
+      flex-grow: 1;
+      font-size: 1.1rem;
+    }
+
     .program-icon {
-      width: 48px; height: 48px;
+      width: 48px;
+      height: 48px;
       border-radius: 8px;
+      object-fit: cover;
+      margin-left: 10px;
       background: #333;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-left: 10px;
-      overflow: hidden;
       font-size: 1.2rem;
-      color: #fff;
-      flex-shrink: 0;
+      color: white;
     }
+
     .program-icon img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
+      border-radius: 8px;
     }
+
     .program-item button {
-      margin-right: 10px;
-      padding: 6px 12px;
-      background: #fff;
-      color: #000;
+      padding: 6px 15px;
+      font-size: 0.9rem;
+      background: white;
+      color: black;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      flex-shrink: 0;
+      margin-right: 10px;
     }
-    .program-item button:hover { background: #ddd; }
-    .error-message {
-      background: #331; color: #f66;
-      padding: 15px; border-radius: 8px;
-      margin-top: 20px; border-left: 4px solid #f66;
+
+    .program-item button:hover {
+      background: #ddd;
     }
-    .missing-programs {
-      background: #331; color: #f66;
-      padding: 15px; border-radius: 8px;
-      margin-top: 20px; border-left: 4px solid #f66;
-    }
-    .missing-programs h3 { margin: 0 0 10px; }
   </style>
 </head>
 <body>
+
   <div class="header">
     <div class="title">Limbo Hybrid</div>
     <div class="time" id="time">--:--:--</div>
   </div>
 
-  <div class="program-list" id="programList">
-    <div class="loading-message">Programme werden geladen...</div>
-  </div>
+  <div class="program-list" id="programList"></div>
 
   <script>
-    // Programme und ihre Icons (In jedem Ordner /programms/<id>/icon/icon.png)
+    // Programmdaten
     const programConfig = {
-      clock:       { name: "Clock",       path: "programms/clock/",         icon: "programms/clock/icon/icon.png" },
-      Dynamic:     { name: "Dynamic",     path: "programms/Dynamic/",       icon: "programms/Dynamic/icon/icon.png" },
-      Storywrighter:{ name: "Storywrighter", path: "programms/Storywrighter/", icon: "programms/Storywrighter/icon/icon.png" },
-      "Colorfull Pallets":{ name:"Colorfull Pallets", path:"programms/Colorfull Pallets/", icon:"programms/Colorfull Pallets/icon/icon.png" },
-      "Qr-Maker":  { name: "Qr-Maker",    path: "programms/Qr-Maker/",      icon: "programms/Qr-Maker/icon/icon.png" }
+      "clock": {
+        name: "Clock",
+        iconPath: "Limbo-hybrid/programms/clock/icon/icon.png"
+      },
+      "Colorfull Pallets": {
+        name: "Colorfull Pallets",
+        iconPath: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
+      },
+      "Storywrighter": {
+        name: "Storywrighter",
+        iconPath: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
+      },
+      "Qr-Maker": {
+        name: "Qr-Maker",
+        iconPath: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
+      },
+      "Dynamic": {
+        name: "Dynamic",
+        iconPath: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
+      }
     };
 
-    // Uhrzeit
+    // Uhrzeit aktualisieren
     function updateTime() {
       const now = new Date();
-      document.getElementById("time").textContent =
-        now.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+      const timeStr = now.toLocaleTimeString('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      document.getElementById("time").textContent = timeStr;
     }
-    updateTime(); setInterval(updateTime,1000);
+    updateTime();
+    setInterval(updateTime, 1000);
 
-    // Check Ordner exist (HEAD auf index.html in diesem Ordner)
-    async function folderExists(cfg) {
-      try {
-        const res = await fetch(cfg.path + cfg.name + ".html", { method: "HEAD" });
-        return res.ok;
-      } catch {
-        return false;
-      }
-    }
-
-    // Laden
-    async function loadPrograms() {
+    // Programme anzeigen
+    function showPrograms() {
       const list = document.getElementById("programList");
-      list.innerHTML = "";
-      const missing = [];
 
-      for (let id in programConfig) {
-        const cfg = programConfig[id];
-        if (!await folderExists(cfg)) {
-          missing.push(cfg.name + ` (${cfg.path})`);
-          continue;
-        }
+      Object.keys(programConfig).forEach(id => {
+        const config = programConfig[id];
+
         const item = document.createElement("div");
         item.className = "program-item";
 
+        const name = document.createElement("div");
+        name.className = "program-name";
+        name.textContent = config.name;
+
         const btn = document.createElement("button");
         btn.textContent = "Starten";
-        btn.onclick = ()=>alert(`Starte ${cfg.name}`);
+        btn.onclick = () => {
+          alert(`Programm "${config.name}" gestartet.`);
+        };
 
-        const label = document.createElement("div");
-        label.className = "program-name";
-        label.textContent = cfg.name;
+        const icon = document.createElement("div");
+        icon.className = "program-icon";
+        
+        // Zuerst Platzhalter-Buchstaben anzeigen
+        icon.textContent = config.name.charAt(0).toUpperCase();
 
-        const iconBox = document.createElement("div");
-        iconBox.className = "program-icon";
-        const img = new Image();
-        img.src = cfg.icon;
-        img.onload = ()=>{ iconBox.textContent=""; iconBox.appendChild(img); };
-        img.onerror=()=>{ iconBox.textContent=cfg.name.charAt(0); };
-        iconBox.textContent = cfg.name.charAt(0);
+        // Bild laden
+        const img = document.createElement("img");
+        img.src = config.iconPath;
+        img.alt = config.name;
 
-        item.append(label,btn,iconBox);
+        // Wenn Bild erfolgreich geladen wird, ersetze den Platzhalter
+        img.onload = () => {
+          icon.innerHTML = "";
+          icon.appendChild(img);
+        };
+
+        // Wenn Bild nicht geladen werden kann, behalte den Platzhalter
+        img.onerror = () => {
+          // Platzhalter bleibt bestehen (bereits gesetzt)
+          console.log(`Icon für ${config.name} konnte nicht geladen werden: ${config.iconPath}`);
+        };
+
+        item.appendChild(name);
+        item.appendChild(btn);
+        item.appendChild(icon);
         list.appendChild(item);
-      }
-
-      if (missing.length) {
-        const div = document.createElement("div");
-        div.className = "missing-programs";
-        div.innerHTML = "<h3>Missing Program Folders</h3><ul>" +
-          missing.map(m=>`<li>${m}</li>`).join("") +
-          "</ul>";
-        list.appendChild(div);
-      }
+      });
     }
 
-    document.addEventListener("DOMContentLoaded", loadPrograms);
+    document.addEventListener("DOMContentLoaded", showPrograms);
   </script>
+
 </body>
 </html>
