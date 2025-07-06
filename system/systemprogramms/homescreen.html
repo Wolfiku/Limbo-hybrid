@@ -71,13 +71,6 @@
       color: white;
     }
 
-    .program-icon img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
     .program-item button {
       padding: 6px 15px;
       font-size: 0.9rem;
@@ -104,27 +97,27 @@
   <div class="program-list" id="programList"></div>
 
   <script>
-    // Programmdaten mit korrekten Pfaden
+    // Programmdaten
     const programConfig = {
       "clock": {
         name: "Clock",
-        iconPath: "../../Programms/clock/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/clock/icon/icon.png"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        iconPath: "../../Programms/Colorfull Pallets/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        iconPath: "../../Programms/Storywrighter/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        iconPath: "../../Programms/Qr-Maker/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
       },
       "Dynamic": {
         name: "Dynamic",
-        iconPath: "../../Programms/Dynamic/icon/icon.png"
+        iconPath: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
       }
     };
 
@@ -163,31 +156,30 @@
 
         const icon = document.createElement("div");
         icon.className = "program-icon";
-        
-        // Zuerst Buchstaben-Platzhalter anzeigen
-        icon.textContent = config.name.charAt(0).toUpperCase();
-
-        // Bild laden
         const img = document.createElement("img");
         img.src = config.iconPath;
         img.alt = config.name;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "8px";
 
-        // Debug: Bildpfad in der Konsole anzeigen
-        console.log(`Attempting to load icon: ${config.iconPath}`);
+        img.onerror = () => {
+          icon.textContent = config.name.charAt(0).toUpperCase();
+        };
 
-        // Wenn Bild erfolgreich geladen wird, ersetze den Platzhalter
         img.onload = () => {
-          console.log(`✅ Icon loaded successfully: ${config.iconPath}`);
           icon.innerHTML = "";
           icon.appendChild(img);
         };
 
-        // Wenn Bild nicht geladen werden kann, behalte den Platzhalter
-        img.onerror = () => {
-          console.error(`❌ Failed to load icon for ${config.name}: ${config.iconPath}`);
-          console.error(`Error: Icon file not found or path incorrect`);
-          // Fallback auf Buchstaben bleibt bestehen
-        };
+        // Standardanzeige (wenn Bild noch nicht geladen)
+        icon.textContent = config.name.charAt(0).toUpperCase();
+
+        // Bild trotzdem versuchen zu laden
+        setTimeout(() => {
+          icon.appendChild(img);
+        }, 100);
 
         item.appendChild(name);
         item.appendChild(btn);
