@@ -1,14 +1,11 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Limbo Hybrid – Homescreen</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 20px;
@@ -24,14 +21,8 @@
       margin-bottom: 30px;
     }
 
-    .header .title {
-      font-size: 1.2rem;
-    }
-
-    .header .time {
-      font-size: 1rem;
-      color: #ccc;
-    }
+    .header .title { font-size: 1.2rem; }
+    .header .time { font-size: 1rem; color: #ccc; }
 
     .program-list {
       display: flex;
@@ -48,14 +39,9 @@
       transition: background 0.3s;
     }
 
-    .program-item:hover {
-      background: #222;
-    }
+    .program-item:hover { background: #222; }
 
-    .program-name {
-      flex-grow: 1;
-      font-size: 1.1rem;
-    }
+    .program-name { flex-grow: 1; font-size: 1.1rem; }
 
     .program-icon {
       width: 48px;
@@ -82,8 +68,19 @@
       margin-right: 10px;
     }
 
-    .program-item button:hover {
-      background: #ddd;
+    .program-item button:hover { background: #ddd; }
+
+    .error-box {
+      background: #331;
+      color: #ff6b6b;
+      padding: 15px;
+      margin-top: 30px;
+      border-radius: 10px;
+      border-left: 4px solid #ff6b6b;
+    }
+    .error-box h3 {
+      color: #ff8c8c;
+      margin: 0 0 10px;
     }
   </style>
 </head>
@@ -95,33 +92,40 @@
   </div>
 
   <div class="program-list" id="programList"></div>
+  <div class="error-box" id="errorBox" style="display: none;">
+    <h3>Missing Program Folders</h3>
+    <ul id="missingList"></ul>
+  </div>
 
   <script>
-    // Programmdaten
     const programConfig = {
       "clock": {
         name: "Clock",
-        iconPath: "Limbo-hybrid/programms/clock/icon/icon.png"
+        path: "Limbo-hybrid/programms/clock/",
+        icon: "Limbo-hybrid/programms/clock/icon/icon.png"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        iconPath: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
+        path: "Limbo-hybrid/programms/Colorfull Pallets/",
+        icon: "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        iconPath: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
+        path: "Limbo-hybrid/programms/Storywrighter/",
+        icon: "Limbo-hybrid/programms/Storywrighter/icon/icon.png"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        iconPath: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
+        path: "Limbo-hybrid/programms/Qr-Maker/",
+        icon: "Limbo-hybrid/programms/Qr-Maker/icon/icon.png"
       },
       "Dynamic": {
         name: "Dynamic",
-        iconPath: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
+        path: "Limbo-hybrid/programms/Dynamic/",
+        icon: "Limbo-hybrid/programms/Dynamic/icon/icon.png"
       }
     };
 
-    // Uhrzeit aktualisieren
     function updateTime() {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('de-DE', {
@@ -134,58 +138,72 @@
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Programme anzeigen
-    function showPrograms() {
-      const list = document.getElementById("programList");
+    async function folderExists(url) {
+      try {
+        const res = await fetch(url, { method: 'HEAD' });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
 
-      Object.keys(programConfig).forEach(id => {
-        const config = programConfig[id];
+    async function showPrograms() {
+      const list = document.getElementById("programList");
+      const errorBox = document.getElementById("errorBox");
+      const missingList = document.getElementById("missingList");
+
+      for (const key in programConfig) {
+        const prog = programConfig[key];
+        const exists = await folderExists(prog.path);
+        
+        if (!exists) {
+          errorBox.style.display = "block";
+          const li = document.createElement("li");
+          li.textContent = `❌ "${prog.name}" is missing at ${prog.path}`;
+          missingList.appendChild(li);
+          continue;
+        }
 
         const item = document.createElement("div");
         item.className = "program-item";
 
         const name = document.createElement("div");
         name.className = "program-name";
-        name.textContent = config.name;
+        name.textContent = prog.name;
 
         const btn = document.createElement("button");
-        btn.textContent = "Starten";
+        btn.textContent = "Start";
         btn.onclick = () => {
-          alert(`Programm "${config.name}" gestartet.`);
+          alert(`Program "${prog.name}" started.`);
         };
 
         const icon = document.createElement("div");
         icon.className = "program-icon";
         const img = document.createElement("img");
-        img.src = config.iconPath;
-        img.alt = config.name;
+        img.src = prog.icon;
+        img.alt = prog.name;
         img.style.width = "100%";
         img.style.height = "100%";
         img.style.objectFit = "cover";
         img.style.borderRadius = "8px";
 
         img.onerror = () => {
-          icon.textContent = config.name.charAt(0).toUpperCase();
+          icon.textContent = prog.name.charAt(0).toUpperCase();
         };
-
         img.onload = () => {
           icon.innerHTML = "";
           icon.appendChild(img);
         };
 
-        // Standardanzeige (wenn Bild noch nicht geladen)
-        icon.textContent = config.name.charAt(0).toUpperCase();
-
-        // Bild trotzdem versuchen zu laden
-        setTimeout(() => {
-          icon.appendChild(img);
-        }, 100);
+        // Default symbol
+        icon.textContent = prog.name.charAt(0).toUpperCase();
+        setTimeout(() => { icon.appendChild(img); }, 100);
 
         item.appendChild(name);
         item.appendChild(btn);
         item.appendChild(icon);
         list.appendChild(item);
-      });
+      }
     }
 
     document.addEventListener("DOMContentLoaded", showPrograms);
