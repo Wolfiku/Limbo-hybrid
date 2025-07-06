@@ -1,231 +1,232 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Limbo Hybrid – Homescreen</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
+.sidebar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column; overflow-y: auto; transition: opacity 0.5s ease, transform 0.5s ease; }
+.sidebar.hidden { opacity: 0; transform: scale(0.95); }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header .title { font-size: 1.2rem; }
+.header .time { font-size: 1rem; color: #ccc; }
+.program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+.program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s, transform 0.3s; cursor: pointer; }
+.program-item:hover, .program-item.active { background: #333; transform: scale(1.02); }
+.program-item.uploaded { border: 2px solid yellow; }
+.program-item.media { border: 2px solid #0a0; }
+.program-name { flex-grow: 1; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.program-icon, .program-icon img { width: 32px; height: 32px; border-radius: 6px; }
+.program-icon { margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.program-icon.play-icon { background: #0a0; }
+.player-frame { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; background: #000; animation: fadeIn 0.5s ease; z-index: 100; }
+.media-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; animation: fadeIn 0.5s ease; }
+.media-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.media-content img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.media-content video { max-width: 100%; max-height: 100%; }
+.media-content audio { width: 80%; max-width: 600px; }
+.exit-btn { position: fixed; right: 20px; bottom: 20px; background: #e00; color: #fff; border: none; border-radius: 8px; cursor: pointer; padding: 10px 20px; font-size: 1rem; display: none; transition: all 0.5s ease; white-space: nowrap; overflow: hidden; z-index: 101; }
+.exit-btn.minimized { width: 40px; padding: 10px; animation: shrink 0.5s forwards; }
+.exit-btn:hover { background: #c00; }
+.upload-btn { position: fixed; left: 20px; bottom: 20px; width: 50px; height: 50px; background: #0a0; color: #fff; border: none; border-radius: 50%; font-size: 2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; z-index: 102; }
+.upload-btn:hover { background: #0c0; transform: scale(1.1); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shrink { from { width: auto; } to { width: 40px; } }
+</style>
+<!-- JSZip für ZIP-Verarbeitung -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+<body>
+<div class="sidebar" id="sidebar">
+  <div class="header">
+    <div class="title">Limbo Hybrid</div>
+    <div class="time" id="time">--:--:--</div>
+  </div>
+  <div class="program-list" id="programList"></div>
+</div>
+<iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
+<div id="mediaViewer" class="media-viewer">
+  <div class="media-content" id="mediaContent"></div>
+</div>
+<button id="exitBtn" class="exit-btn">Exit Program</button>
+<button id="uploadBtn" class="upload-btn">+</button>
+<script>
+const programConfig = {
+  clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
+  "Colorful Palettes": { name: "Colorful Palettes", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
+  Storywriter: { name: "Storywriter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
+  "QR Maker": { name: "QR Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
+  "Dynamic Notes": { name: "Dynamic Notes", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
+};
 
-<!DOCTYPE html>  <html lang="de">  
-<head>  
-<meta charset="UTF-8" />  
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />  
-<title>Limbo Hybrid – Homescreen</title>  
-<style>  
-* { box-sizing: border-box; }  
-html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }  
-.sidebar { position: fixed; top: 0; left: 0; width: 100%; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column; overflow-y: auto; transition: opacity 0.5s ease, transform 0.5s ease; }  
-.sidebar.hidden { opacity: 0; transform: scale(0.95); }  
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }  
-.header .title { font-size: 1.2rem; }  
-.header .time { font-size: 1rem; color: #ccc; }  
-.program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }  
-.program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s, transform 0.3s; cursor: pointer; }  
-.program-item:hover, .program-item.active { background: #333; transform: scale(1.02); }  
-.program-item.uploaded { border: 2px solid yellow; }  
-.program-item.media { border: 2px solid #0a0; }  
-.program-name { flex-grow: 1; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }  
-.program-icon, .program-icon img { width: 32px; height: 32px; border-radius: 6px; }  
-.program-icon { margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; overflow: hidden; }  
-.program-icon.play-icon { background: #0a0; }  
-.player-frame { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; background: #000; animation: fadeIn 0.5s ease; z-index: 100; }  
-.media-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; animation: fadeIn 0.5s ease; }  
-.media-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }  
-.media-content img { max-width: 100%; max-height: 100%; object-fit: contain; }  
-.media-content video { max-width: 100%; max-height: 100%; }  
-.media-content audio { width: 80%; max-width: 600px; }  
-.exit-btn { position: fixed; right: 20px; bottom: 20px; background: #e00; color: #fff; border: none; border-radius: 8px; cursor: pointer; padding: 10px 20px; font-size: 1rem; display: none; transition: all 0.5s ease; white-space: nowrap; overflow: hidden; z-index: 101; }  
-.exit-btn.minimized { width: 40px; padding: 10px; animation: shrink 0.5s forwards; }  
-.exit-btn:hover { background: #c00; }  
-.upload-btn { position: fixed; left: 20px; bottom: 20px; width: 50px; height: 50px; background: #0a0; color: #fff; border: none; border-radius: 50%; font-size: 2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s; z-index: 102; }  
-.upload-btn:hover { background: #0c0; transform: scale(1.1); }  
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }  
-@keyframes shrink { from { width: auto; } to { width: 40px; } }  
-</style>  
-<!-- JSZip für ZIP-Verarbeitung -->  
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>  
-</head>  
-<body>  
-<div class="sidebar" id="sidebar">  
-  <div class="header">  
-    <div class="title">Limbo Hybrid</div>  
-    <div class="time" id="time">--:--:--</div>  
-  </div>  
-  <div class="program-list" id="programList"></div>  
-</div>  
-<iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>  
-<div id="mediaViewer" class="media-viewer">  
-  <div class="media-content" id="mediaContent"></div>  
-</div>  
-<button id="exitBtn" class="exit-btn">Exit Program</button>  
-<button id="uploadBtn" class="upload-btn">+</button>  
-<script>  
-const programConfig = {  
-  clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },  
-  "Colorful Palettes": { name: "Colorful Palettes", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },  
-  Storywriter: { name: "Storywriter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },  
-  "QR Maker": { name: "QR Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },  
-  "Dynamic Notes": { name: "Dynamic Notes", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }  
-};  // Time
+// Time
 function updateTime() {
-const now = new Date();
-document.getElementById('time').textContent = now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const now = new Date();
+  document.getElementById('time').textContent = now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 setInterval(updateTime,1000); updateTime();
 
 // Show hardcoded programs
 function showPrograms() {
-const list = document.getElementById('programList');
-Object.values(programConfig).forEach(cfg=>{
-const item=document.createElement('div'); item.className='program-item';
-item.innerHTML=<div class='program-name'>${cfg.name}</div>   <div class='program-icon'><img src='${cfg.iconPath}' alt='${cfg.name}'/></div>;
-item.onclick=()=>loadProgram(item,cfg.launchPath);
-list.appendChild(item);
-});
+  const list = document.getElementById('programList');
+  Object.values(programConfig).forEach(cfg=>{
+    const item=document.createElement('div'); item.className='program-item';
+    item.innerHTML=`<div class='program-name'>${cfg.name}</div>
+      <div class='program-icon'><img src='${cfg.iconPath}' alt='${cfg.name}'/></div>`;
+    item.onclick=()=>loadProgram(item,cfg.launchPath);
+    list.appendChild(item);
+  });
 }
 
 // Check if file is supported media type
 function isMediaFile(filename) {
-const ext = filename.toLowerCase().split('.').pop();
-return ['png', 'jpg', 'jpeg', 'mp3', 'wav', 'wave', 'mp4'].includes(ext);
+  const ext = filename.toLowerCase().split('.').pop();
+  return ['png', 'jpg', 'jpeg', 'mp3', 'wav', 'wave', 'mp4'].includes(ext);
 }
 
 // Get media type from filename
 function getMediaType(filename) {
-const ext = filename.toLowerCase().split('.').pop();
-if(['png', 'jpg', 'jpeg'].includes(ext)) return 'image';
-if(['mp3', 'wav', 'wave'].includes(ext)) return 'audio';
-if(['mp4'].includes(ext)) return 'video';
-return 'unknown';
+  const ext = filename.toLowerCase().split('.').pop();
+  if(['png', 'jpg', 'jpeg'].includes(ext)) return 'image';
+  if(['mp3', 'wav', 'wave'].includes(ext)) return 'audio';
+  if(['mp4'].includes(ext)) return 'video';
+  return 'unknown';
 }
 
 // Create media element
 function createMediaElement(url, type, filename) {
-const mediaContent = document.getElementById('mediaContent');
-mediaContent.innerHTML = '';
-
-let element;
-if(type === 'image') {
-element = document.createElement('img');
-element.src = url;
-element.alt = filename;
-} else if(type === 'audio') {
-element = document.createElement('audio');
-element.src = url;
-element.controls = true;
-element.autoplay = true;
-} else if(type === 'video') {
-element = document.createElement('video');
-element.src = url;
-element.controls = true;
-element.autoplay = true;
-}
-
-if(element) {
-mediaContent.appendChild(element);
-}
+  const mediaContent = document.getElementById('mediaContent');
+  mediaContent.innerHTML = '';
+  
+  let element;
+  if(type === 'image') {
+    element = document.createElement('img');
+    element.src = url;
+    element.alt = filename;
+  } else if(type === 'audio') {
+    element = document.createElement('audio');
+    element.src = url;
+    element.controls = true;
+    element.autoplay = true;
+  } else if(type === 'video') {
+    element = document.createElement('video');
+    element.src = url;
+    element.controls = true;
+    element.autoplay = true;
+  }
+  
+  if(element) {
+    mediaContent.appendChild(element);
+  }
 }
 
 // Load media file
 function loadMedia(item, url, type, filename) {
-document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
-item.classList.add('active');
-document.getElementById('sidebar').classList.add('hidden');
-
-createMediaElement(url, type, filename);
-document.getElementById('mediaViewer').style.display = 'block';
-
-const ex=document.getElementById('exitBtn');
-ex.style.display='block';
-document.getElementById('uploadBtn').style.display='none';
-setTimeout(()=>{ex.classList.add('minimized'); ex.textContent='✖';},2000);
+  document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
+  item.classList.add('active');
+  document.getElementById('sidebar').classList.add('hidden');
+  
+  createMediaElement(url, type, filename);
+  document.getElementById('mediaViewer').style.display = 'block';
+  
+  const ex=document.getElementById('exitBtn'); 
+  ex.style.display='block'; 
+  document.getElementById('uploadBtn').style.display='none';
+  setTimeout(()=>{ex.classList.add('minimized'); ex.textContent='✖';},2000);
 }
 
 // Load user-upload
 function enableUpload(){
-document.getElementById('uploadBtn').onclick=()=>{
-const inp=document.createElement('input');
-inp.type='file';
-inp.accept='.html,.png,.jpg,.jpeg,.mp3,.wav,.wave,.mp4';
-inp.onchange=e=>{
-const f=e.target.files[0];
-if(f) {
-const name=f.name.replace(/.[^/.]+$/,'');
-const item=document.createElement('div');
-
-if(f.name.endsWith('.html')) {  
-      // HTML file handling (existing functionality)  
-      item.className='program-item uploaded';  
-      const reader=new FileReader();   
-      reader.onload=()=>{  
-        const blob=new Blob([reader.result],{type:'text/html'});  
-        const url=URL.createObjectURL(blob);  
-        item.innerHTML=`<div class='program-name'>${name}</div><div class='program-icon' style='color:yellow;'>#</div>`;  
-        item.onclick=()=>loadProgram(item,url);  
-        document.getElementById('programList').appendChild(item);  
-      };   
-      reader.readAsText(f);  
-    } else if(isMediaFile(f.name)) {  
-      // Media file handling  
-      item.className='program-item media';  
-      const reader=new FileReader();   
-      reader.onload=()=>{  
-        const blob=new Blob([reader.result],{type:f.type});  
-        const url=URL.createObjectURL(blob);  
-        const mediaType = getMediaType(f.name);  
-        item.innerHTML=`<div class='program-name'>${name}</div><div class='program-icon play-icon'>▶</div>`;  
-        item.onclick=()=>loadMedia(item,url,mediaType,f.name);  
-        document.getElementById('programList').appendChild(item);  
-      };   
-      reader.readAsArrayBuffer(f);  
-    } else {  
-      alert('Please upload a valid HTML file or supported media file (PNG, JPG, MP3, WAV, MP4).');  
-      return;  
-    }  
-  }  
-};  
-inp.click();
-
-};
+  document.getElementById('uploadBtn').onclick=()=>{
+    const inp=document.createElement('input'); 
+    inp.type='file'; 
+    inp.accept='.html,.png,.jpg,.jpeg,.mp3,.wav,.wave,.mp4';
+    inp.onchange=e=>{
+      const f=e.target.files[0]; 
+      if(f) {
+        const name=f.name.replace(/\.[^/.]+$/,'');
+        const item=document.createElement('div'); 
+        
+        if(f.name.endsWith('.html')) {
+          // HTML file handling (existing functionality)
+          item.className='program-item uploaded';
+          const reader=new FileReader(); 
+          reader.onload=()=>{
+            const blob=new Blob([reader.result],{type:'text/html'});
+            const url=URL.createObjectURL(blob);
+            item.innerHTML=`<div class='program-name'>${name}</div><div class='program-icon' style='color:yellow;'>#</div>`;
+            item.onclick=()=>loadProgram(item,url);
+            document.getElementById('programList').appendChild(item);
+          }; 
+          reader.readAsText(f);
+        } else if(isMediaFile(f.name)) {
+          // Media file handling
+          item.className='program-item media';
+          const reader=new FileReader(); 
+          reader.onload=()=>{
+            const blob=new Blob([reader.result],{type:f.type});
+            const url=URL.createObjectURL(blob);
+            const mediaType = getMediaType(f.name);
+            item.innerHTML=`<div class='program-name'>${name}</div><div class='program-icon play-icon'>▶</div>`;
+            item.onclick=()=>loadMedia(item,url,mediaType,f.name);
+            document.getElementById('programList').appendChild(item);
+          }; 
+          reader.readAsArrayBuffer(f);
+        } else {
+          alert('Please upload a valid HTML file or supported media file (PNG, JPG, MP3, WAV, MP4).');
+          return;
+        }
+      }
+    };
+    inp.click();
+  };
 }
 
 // SLV1 loader
 async function loadSLV1(){
-try{
-const res=await fetch('../../programms/');
-const txt=await res.text();
-const doc=new DOMParser().parseFromString(txt,'text/html');
-const links=[...doc.querySelectorAll('a')].map(a=>a.href||a.text).filter(h=>/.(simple_limbo_v1|slv1)$/i.test(h));
-for(const l of links){
-const data=await(fetch(l).then(r=>r.arrayBuffer()));
-const zip=await JSZip.loadAsync(data);
-const htmlStr=await zip.file('main.html').async('string');
-const iconBlob=await zip.file('icon.png').async('blob');
-const htmlUrl=URL.createObjectURL(new Blob([htmlStr],{type:'text/html'}));
-const iconUrl=URL.createObjectURL(iconBlob);
-const name=l.split('/').pop().replace(/.(simple_limbo_v1|slv1)$/i,'');
-const item=document.createElement('div'); item.className='program-item';
-item.innerHTML=<div class='program-name'>${name} [SLV1]</div><div class='program-icon'><img src='${iconUrl}'/></div>;
-item.onclick=()=>loadProgram(item,htmlUrl);
-document.getElementById('programList').appendChild(item);
-}
-} catch(e){console.error('SLV1 error',e);}
+  try{
+    const res=await fetch('../../programms/');
+    const txt=await res.text();
+    const doc=new DOMParser().parseFromString(txt,'text/html');
+    const links=[...doc.querySelectorAll('a')].map(a=>a.href||a.text).filter(h=>/\.(simple_limbo_v1|slv1)$/i.test(h));
+    for(const l of links){
+      const data=await(fetch(l).then(r=>r.arrayBuffer()));
+      const zip=await JSZip.loadAsync(data);
+      const htmlStr=await zip.file('main.html').async('string');
+      const iconBlob=await zip.file('icon.png').async('blob');
+      const htmlUrl=URL.createObjectURL(new Blob([htmlStr],{type:'text/html'}));
+      const iconUrl=URL.createObjectURL(iconBlob);
+      const name=l.split('/').pop().replace(/\.(simple_limbo_v1|slv1)$/i,'');
+      const item=document.createElement('div'); item.className='program-item';
+      item.innerHTML=`<div class='program-name'>${name} [SLV1]</div><div class='program-icon'><img src='${iconUrl}'/></div>`;
+      item.onclick=()=>loadProgram(item,htmlUrl);
+      document.getElementById('programList').appendChild(item);
+    }
+  } catch(e){console.error('SLV1 error',e);}  
 }
 
 // Load program
 function loadProgram(item,url){
-document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
-item.classList.add('active');
-document.getElementById('sidebar').classList.add('hidden');
-const fr=document.getElementById('playerFrame'); fr.src=url; fr.style.display='block';
-const ex=document.getElementById('exitBtn'); ex.style.display='block'; document.getElementById('uploadBtn').style.display='none';
-setTimeout(()=>{ex.classList.add('minimized'); ex.textContent='✖';},2000);
+  document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
+  item.classList.add('active');
+  document.getElementById('sidebar').classList.add('hidden');
+  const fr=document.getElementById('playerFrame'); fr.src=url; fr.style.display='block';
+  const ex=document.getElementById('exitBtn'); ex.style.display='block'; document.getElementById('uploadBtn').style.display='none';
+  setTimeout(()=>{ex.classList.add('minimized'); ex.textContent='✖';},2000);
 }
 
 document.getElementById('exitBtn').onclick=()=>{
-document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
-const fr=document.getElementById('playerFrame'); fr.style.display='none'; fr.src='';
-document.getElementById('mediaViewer').style.display='none';
-document.getElementById('sidebar').classList.remove('hidden');
-const ex=document.getElementById('exitBtn'); ex.style.display='none'; ex.classList.remove('minimized'); ex.textContent='Exit Program';
-document.getElementById('uploadBtn').style.display='flex';
+  document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
+  const fr=document.getElementById('playerFrame'); fr.style.display='none'; fr.src='';
+  document.getElementById('mediaViewer').style.display='none';
+  document.getElementById('sidebar').classList.remove('hidden');
+  const ex=document.getElementById('exitBtn'); ex.style.display='none'; ex.classList.remove('minimized'); ex.textContent='Exit Program';
+  document.getElementById('uploadBtn').style.display='flex';
 };
 
 window.addEventListener('DOMContentLoaded',()=>{ showPrograms(); enableUpload(); loadSLV1(); });
 </script>
-
-</body>  
-</html>  
+</body>
+</html>
