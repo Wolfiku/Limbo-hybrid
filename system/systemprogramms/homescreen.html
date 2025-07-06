@@ -97,49 +97,51 @@
   <div class="program-list" id="programList"></div>
 
   <script>
-    // Programmdaten
-const programConfig = {
-  "clock": {
-    name: "Clock",
-    iconPath: "../../programms/clock/icon/icon.png"
-  },
-  "Colorfull Pallets": {
-    name: "Colorfull Pallets",
-    iconPath: "../../programms/Colorfull Pallets/icon/icon.png"
-  },
-  "Storywrighter": {
-    name: "Storywrighter",
-    iconPath: "../../programms/Storywrighter/icon/icon.png"
-  },
-  "Qr-Maker": {
-    name: "Qr-Maker",
-    iconPath: "../../programms/Qr-Maker/icon/icon.png"
-  },
-  "Dynamic": {
-    name: "Dynamic",
-    iconPath: "../../programms/Dynamic/icon/icon.png"
-  }
-};
+    // Programm-Konfiguration
+    const programConfig = {
+      "clock": {
+        name: "Clock",
+        iconPath: "../../programms/clock/icon/icon.png",
+        launchPath: "programms/clock/clock.html"
+      },
+      "Colorfull Pallets": {
+        name: "Colorfull Pallets",
+        iconPath: "../../programms/Colorfull Pallets/icon/icon.png",
+        launchPath: "programms/Colorfull Pallets/Colorfull Palets.html"
+      },
+      "Storywrighter": {
+        name: "Storywrighter",
+        iconPath: "../../programms/Storywrighter/icon/icon.png",
+        launchPath: "programms/Storywrighter/Storywrighter.html"
+      },
+      "Qr-Maker": {
+        name: "Qr-Maker",
+        iconPath: "../../programms/Qr-Maker/icon/icon.png",
+        launchPath: "programms/Qr-Maker/Qr Code Generator.html"
+      },
+      "Dynamic": {
+        name: "Dynamic",
+        iconPath: "../../programms/Dynamic/icon/icon.png",
+        launchPath: "programms/Dynamic/Dynamic Notes.html"
+      }
+    };
+
     // Uhrzeit aktualisieren
     function updateTime() {
       const now = new Date();
       const timeStr = now.toLocaleTimeString('de-DE', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
       });
       document.getElementById("time").textContent = timeStr;
     }
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Programme anzeigen
+    // Programme anzeigen und Startfunktion implementieren
     function showPrograms() {
       const list = document.getElementById("programList");
 
-      Object.keys(programConfig).forEach(id => {
-        const config = programConfig[id];
-
+      Object.values(programConfig).forEach(config => {
         const item = document.createElement("div");
         item.className = "program-item";
 
@@ -150,7 +152,9 @@ const programConfig = {
         const btn = document.createElement("button");
         btn.textContent = "Starten";
         btn.onclick = () => {
-          alert(`Programm "${config.name}" gestartet.`);
+          // Pfad an player.html übergeben
+          const playerUrl = `system/systemprogramms/player.html?file=${encodeURIComponent(config.launchPath)}`;
+          window.location.href = playerUrl;
         };
 
         const icon = document.createElement("div");
@@ -166,19 +170,14 @@ const programConfig = {
         img.onerror = () => {
           icon.textContent = config.name.charAt(0).toUpperCase();
         };
-
         img.onload = () => {
           icon.innerHTML = "";
           icon.appendChild(img);
         };
 
-        // Standardanzeige (wenn Bild noch nicht geladen)
+        // Standardanzeige
         icon.textContent = config.name.charAt(0).toUpperCase();
-
-        // Bild trotzdem versuchen zu laden
-        setTimeout(() => {
-          icon.appendChild(img);
-        }, 100);
+        setTimeout(() => icon.appendChild(img), 100);
 
         item.appendChild(name);
         item.appendChild(btn);
