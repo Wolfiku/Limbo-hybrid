@@ -104,61 +104,31 @@
   <div class="program-list" id="programList"></div>
 
   <script>
-    // Programmdaten mit mehreren Pfad-Optionen
+    // Programmdaten mit korrekten Pfaden
     const programConfig = {
       "clock": {
         name: "Clock",
-        iconPaths: [
-          "Limbo-hybrid/programms/clock/icon/icon.png",
-          "./Limbo-hybrid/programms/clock/icon/icon.png",
-          "../Limbo-hybrid/programms/clock/icon/icon.png",
-          "programms/clock/icon/icon.png",
-          "./programms/clock/icon/icon.png"
-        ],
+        iconPath: "../../Programms/clock/icon/icon.png",
         fallbackIcon: "🕒"
       },
       "Colorfull Pallets": {
         name: "Colorfull Pallets",
-        iconPaths: [
-          "Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png",
-          "./Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png",
-          "../Limbo-hybrid/programms/Colorfull Pallets/icon/icon.png",
-          "programms/Colorfull Pallets/icon/icon.png",
-          "./programms/Colorfull Pallets/icon/icon.png"
-        ],
+        iconPath: "../../Programms/Colorfull Pallets/icon/icon.png",
         fallbackIcon: "🎨"
       },
       "Storywrighter": {
         name: "Storywrighter",
-        iconPaths: [
-          "Limbo-hybrid/programms/Storywrighter/icon/icon.png",
-          "./Limbo-hybrid/programms/Storywrighter/icon/icon.png",
-          "../Limbo-hybrid/programms/Storywrighter/icon/icon.png",
-          "programms/Storywrighter/icon/icon.png",
-          "./programms/Storywrighter/icon/icon.png"
-        ],
+        iconPath: "../../Programms/Storywrighter/icon/icon.png",
         fallbackIcon: "📝"
       },
       "Qr-Maker": {
         name: "Qr-Maker",
-        iconPaths: [
-          "Limbo-hybrid/programms/Qr-Maker/icon/icon.png",
-          "./Limbo-hybrid/programms/Qr-Maker/icon/icon.png",
-          "../Limbo-hybrid/programms/Qr-Maker/icon/icon.png",
-          "programms/Qr-Maker/icon/icon.png",
-          "./programms/Qr-Maker/icon/icon.png"
-        ],
+        iconPath: "../../Programms/Qr-Maker/icon/icon.png",
         fallbackIcon: "📱"
       },
       "Dynamic": {
         name: "Dynamic",
-        iconPaths: [
-          "Limbo-hybrid/programms/Dynamic/icon/icon.png",
-          "./Limbo-hybrid/programms/Dynamic/icon/icon.png",
-          "../Limbo-hybrid/programms/Dynamic/icon/icon.png",
-          "programms/Dynamic/icon/icon.png",
-          "./programms/Dynamic/icon/icon.png"
-        ],
+        iconPath: "../../Programms/Dynamic/icon/icon.png",
         fallbackIcon: "⚡"
       }
     };
@@ -202,35 +172,26 @@
         // Zuerst Emoji-Icon anzeigen als besseren Fallback
         icon.textContent = config.fallbackIcon || config.name.charAt(0).toUpperCase();
 
-        // Funktion zum Versuchen der verschiedenen Pfade
-        function tryLoadIcon(pathIndex = 0) {
-          if (pathIndex >= config.iconPaths.length) {
-            console.log(`❌ Alle Pfade für ${config.name} fehlgeschlagen. Verwende Fallback.`);
-            return;
-          }
+        // Bild laden
+        const img = document.createElement("img");
+        img.src = config.iconPath;
+        img.alt = config.name;
 
-          const currentPath = config.iconPaths[pathIndex];
-          console.log(`Versuche Pfad ${pathIndex + 1}/${config.iconPaths.length}: ${currentPath}`);
+        // Debug: Bildpfad in der Konsole anzeigen
+        console.log(`Versuche Bild zu laden: ${config.iconPath}`);
 
-          const img = document.createElement("img");
-          img.src = currentPath;
-          img.alt = config.name;
+        // Wenn Bild erfolgreich geladen wird, ersetze den Platzhalter
+        img.onload = () => {
+          console.log(`✅ Bild erfolgreich geladen: ${config.iconPath}`);
+          icon.innerHTML = "";
+          icon.appendChild(img);
+        };
 
-          img.onload = () => {
-            console.log(`✅ Bild erfolgreich geladen: ${currentPath}`);
-            icon.innerHTML = "";
-            icon.appendChild(img);
-          };
-
-          img.onerror = () => {
-            console.log(`❌ Pfad fehlgeschlagen: ${currentPath}`);
-            // Nächsten Pfad versuchen
-            tryLoadIcon(pathIndex + 1);
-          };
-        }
-
-        // Starte das Laden mit dem ersten Pfad
-        tryLoadIcon();
+        // Wenn Bild nicht geladen werden kann, behalte den Platzhalter
+        img.onerror = () => {
+          console.log(`❌ Icon für ${config.name} konnte nicht geladen werden: ${config.iconPath}`);
+          // Fallback auf Emoji bleibt bestehen
+        };
 
         item.appendChild(name);
         item.appendChild(btn);
