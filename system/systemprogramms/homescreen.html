@@ -6,65 +6,89 @@
   <title>Limbo Hybrid – Homescreen</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 20px; background-color: #000; color: #fff; font-family: sans-serif; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
+    body.program-active .sidebar { display: none; }
+    body.program-active .player-frame { width: 100%; height: 100%; }
+    .sidebar {
+      width: 300px; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column;
+    }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .header .title { font-size: 1.2rem; }
     .header .time { font-size: 1rem; color: #ccc; }
-    .program-list { display: flex; flex-direction: column; gap: 15px; }
-    .program-item { display: flex; align-items: center; background: #111; border-radius: 12px; padding: 10px 15px; transition: background 0.3s; }
-    .program-item:hover { background: #222; }
+    .program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+    .program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s; cursor: pointer; }
+    .program-item:hover, .program-item.active { background: #333; }
     .program-name { flex-grow: 1; font-size: 1.1rem; }
-    .program-icon { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; margin-left: 10px; background: #333; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; }
-    .program-item button { padding: 6px 15px; font-size: 0.9rem; background: white; color: black; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px; }
-    .program-item button:hover { background: #ddd; }
+    .program-icon { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; }
+    .content { flex-grow: 1; position: relative; }
+    .player-frame { display: none; width: calc(100% - 300px); height: 100%; border: none; background: #000; transition: width 0.3s; }
+    .exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; }
+    .exit-btn:hover { background: #c00; }
+    .container { display: flex; height: 100%; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="title">Limbo Hybrid</div>
-    <div class="time" id="time">--:--:--</div>
+  <div class="container">
+    <div class="sidebar">
+      <div class="header">
+        <div class="title">Limbo Hybrid</div>
+        <div class="time" id="time">--:--:--</div>
+      </div>
+      <div class="program-list" id="programList"></div>
+    </div>
+    <div class="content">
+      <iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
+    </div>
   </div>
-  <div class="program-list" id="programList"></div>
+  <button id="exitBtn" class="exit-btn">Programm verlassen</button>
 
   <script>
-    // Programm-Konfiguration
     const programConfig = {
-      "clock": { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "programms/clock/clock.html" },
-      "Colorfull Pallets": { name: "Colorfull Pallets", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "programms/Colorfull Pallets/Colorfull Palets.html" },
-      "Storywrighter": { name: "Storywrighter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "programms/Storywrighter/Storywrighter.html" },
-      "Qr-Maker": { name: "Qr-Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "programms/Qr-Maker/Qr Code Generator.html" },
-      "Dynamic": { name: "Dynamic", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "programms/Dynamic/Dynamic Notes.html" }
+      clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
+      "Colorfull Pallets": { name: "Colorfull Pallets", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
+      Storywrighter: { name: "Storywrighter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
+      "Qr-Maker": { name: "Qr-Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
+      Dynamic: { name: "Dynamic", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
     };
 
-    // Uhrzeit aktualisieren
     function updateTime() {
       const now = new Date();
-      document.getElementById("time").textContent = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById("time").textContent = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
     }
-    updateTime(); setInterval(updateTime, 1000);
+    setInterval(updateTime, 1000);
+    updateTime();
 
-    // Programme anzeigen und Startfunktion implementieren
     function showPrograms() {
       const list = document.getElementById("programList");
       Object.values(programConfig).forEach(config => {
-        const item = document.createElement("div"); item.className = "program-item";
-        const name = document.createElement("div"); name.className = "program-name"; name.textContent = config.name;
-        const btn = document.createElement("button"); btn.textContent = "Starten";
-        btn.onclick = () => {
-          // Absoluten Pfad zum Player nutzen
-          const playerUrl = `/system/systemprogramms/player.html?file=${encodeURIComponent(config.launchPath)}`;
-          window.location.href = playerUrl;
-        };
-        const icon = document.createElement("div"); icon.className = "program-icon";
-        const img = document.createElement("img"); img.src = config.iconPath; img.alt = config.name;
-        img.style.width = "100%"; img.style.height = "100%"; img.style.objectFit = "cover"; img.style.borderRadius = "8px";
-        img.onerror = () => { icon.textContent = config.name.charAt(0).toUpperCase(); };
-        img.onload = () => { icon.innerHTML = ""; icon.appendChild(img); };
-        icon.textContent = config.name.charAt(0).toUpperCase(); setTimeout(() => icon.appendChild(img), 100);
-        item.appendChild(name); item.appendChild(btn); item.appendChild(icon); list.appendChild(item);
+        const item = document.createElement("div");
+        item.className = "program-item";
+        item.innerHTML = `<div class='program-name'>${config.name}</div><div class='program-icon'>${config.name.charAt(0)}</div>`;
+        item.addEventListener('click', () => loadProgram(item, config));
+        list.appendChild(item);
       });
     }
-    document.addEventListener("DOMContentLoaded", showPrograms);
+
+    function loadProgram(item, config) {
+      document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+      document.body.classList.add('program-active');
+      const iframe = document.getElementById('playerFrame');
+      iframe.style.display = 'block';
+      iframe.src = config.launchPath;
+      document.getElementById('exitBtn').style.display = 'block';
+    }
+
+    document.getElementById('exitBtn').addEventListener('click', () => {
+      document.body.classList.remove('program-active');
+      document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+      const iframe = document.getElementById('playerFrame');
+      iframe.style.display = 'none';
+      iframe.src = '';
+      document.getElementById('exitBtn').style.display = 'none';
+    });
+
+    document.addEventListener('DOMContentLoaded', showPrograms);
   </script>
 </body>
 </html>
