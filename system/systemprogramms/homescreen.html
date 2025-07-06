@@ -8,9 +8,16 @@
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: sans-serif; }
     body.program-active .sidebar { display: none; }
-    body.program-active .player-frame { width: 100%; height: 100%; }
     .sidebar {
-      width: 300px; height: 100%; padding: 20px; background: #111; display: flex; flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      padding: 20px;
+      background: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      overflow-y: auto;
     }
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .header .title { font-size: 1.2rem; }
@@ -20,26 +27,20 @@
     .program-item:hover, .program-item.active { background: #333; }
     .program-name { flex-grow: 1; font-size: 1.1rem; }
     .program-icon { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #fff; }
-    .content { flex-grow: 1; position: relative; }
-    .player-frame { display: none; width: calc(100% - 300px); height: 100%; border: none; background: #000; transition: width 0.3s; }
-    .exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; }
+    .player-frame { display: none; width: 100%; height: 100%; border: none; background: #000; position: fixed; top: 0; left: 0; z-index: 100; }
+    .exit-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 20px; background: #e00; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; display: none; z-index: 101; }
     .exit-btn:hover { background: #c00; }
-    .container { display: flex; height: 100%; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="sidebar">
-      <div class="header">
-        <div class="title">Limbo Hybrid</div>
-        <div class="time" id="time">--:--:--</div>
-      </div>
-      <div class="program-list" id="programList"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="header">
+      <div class="title">Limbo Hybrid</div>
+      <div class="time" id="time">--:--:--</div>
     </div>
-    <div class="content">
-      <iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
-    </div>
+    <div class="program-list" id="programList"></div>
   </div>
+  <iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
   <button id="exitBtn" class="exit-btn">Programm verlassen</button>
 
   <script>
@@ -72,7 +73,7 @@
     function loadProgram(item, config) {
       document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
       item.classList.add('active');
-      document.body.classList.add('program-active');
+      document.getElementById('sidebar').style.display = 'none';
       const iframe = document.getElementById('playerFrame');
       iframe.style.display = 'block';
       iframe.src = config.launchPath;
@@ -80,11 +81,11 @@
     }
 
     document.getElementById('exitBtn').addEventListener('click', () => {
-      document.body.classList.remove('program-active');
       document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
       const iframe = document.getElementById('playerFrame');
       iframe.style.display = 'none';
       iframe.src = '';
+      document.getElementById('sidebar').style.display = 'flex';
       document.getElementById('exitBtn').style.display = 'none';
     });
 
