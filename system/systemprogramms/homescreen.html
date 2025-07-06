@@ -28,94 +28,138 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000;
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes shrink { 0% { width: 100px; } 100% { width: 40px; } }
 </style>
+<!-- JSZip für ZIP-Verarbeitung -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </head>
 <body>
 <div class="sidebar" id="sidebar">
-<div class="header">
-<div class="title">Limbo Hybrid</div>
-<div class="time" id="time">--:--:--</div>
-</div>
-<div class="program-list" id="programList"></div>
+  <div class="header">
+    <div class="title">Limbo Hybrid</div>
+    <div class="time" id="time">--:--:--</div>
+  </div>
+  <div class="program-list" id="programList"></div>
 </div>
 <iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
 <button id="exitBtn" class="exit-btn">Exit Program</button>
 <button id="uploadBtn" class="upload-btn">+</button>
 <script>
 const programConfig = {
-clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
-"Colorful Palettes": { name: "Colorful Palettes", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
-Storywriter: { name: "Storywriter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
-"QR Maker": { name: "QR Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
-"Dynamic Notes": { name: "Dynamic Notes", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
+  clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
+  "Colorful Palettes": { name: "Colorful Palettes", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
+  Storywriter: { name: "Storywriter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
+  "QR Maker": { name: "QR Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
+  "Dynamic Notes": { name: "Dynamic Notes", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
 };
+
+// SLV1-Pakete aus ../../programms laden
+async function loadSLV1() {
+  try {
+    const res = await fetch('../../programms/');
+    const html = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const files = [...doc.querySelectorAll('a')]
+      .map(a => a.getAttribute('href'))
+      .filter(h => h && (/\.simple_limbo_v1$|\.slv1$/i).test(h));
+
+    for (const fileName of files) {
+      const fileUrl = `../../programms/${fileName}`;
+      const data = await fetch(fileUrl).then(r => r.arrayBuffer());
+      const zip = await JSZip.loadAsync(data);
+      const mainHtml = await zip.file('main.html').async('string');
+      const iconBlob = await zip.file('icon.png').async('blob');
+      const blobUrl = URL.createObjectURL(new Blob([mainHtml], { type: 'text/html' }));
+      const iconUrl = URL.createObjectURL(iconBlob);
+      const name = fileName.replace(/\.(simple_limbo_v1|slv1)$/i, '');
+      const item = document.createElement('div');
+      item.className = 'program-item';
+      item.innerHTML = `
+        <div class='program-name'>${name} [SLV1]</div>
+        <div class='program-icon'><img src='${iconUrl}' alt='${name}'></div>`;
+      item.addEventListener('click', () => loadProgram(item, blobUrl));
+      document.getElementById('programList').appendChild(item);
+    }
+  } catch (e) {
+    console.error('SLV1 load error', e);
+  }
+}
+
 function updateTime() {
-const now = new Date();
-document.getElementById("time").textContent = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+  const now = new Date();
+  document.getElementById('time').textContent = now.toLocaleTimeString('de-DE', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
 }
 setInterval(updateTime, 1000);
 updateTime();
+
 function showPrograms() {
-const list = document.getElementById("programList");
-Object.values(programConfig).forEach(config => {
-const item = document.createElement("div");
-item.className = "program-item";
-item.innerHTML = `<div class='program-name'>${config.name}</div><div class='program-icon'><img src='${config.iconPath}' alt='${config.name}'></div>`;
-item.addEventListener('click', () => loadProgram(item, config.launchPath));
-list.appendChild(item);
-});
+  const list = document.getElementById('programList');
+  Object.values(programConfig).forEach(config => {
+    const item = document.createElement('div');
+    item.className = 'program-item';
+    item.innerHTML = `<div class='program-name'>${config.name}</div><div class='program-icon'><img src='${config.iconPath}' alt='${config.name}'></div>`;
+    item.addEventListener('click', () => loadProgram(item, config.launchPath));
+    list.appendChild(item);
+  });
 }
+
 function loadProgram(item, url) {
-document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
-item.classList.add('active');
-document.getElementById('sidebar').classList.add('hidden');
-const iframe = document.getElementById('playerFrame');
-iframe.style.display = 'block';
-iframe.src = url;
-const exitBtn = document.getElementById('exitBtn');
-exitBtn.style.display = 'block';
-document.getElementById('uploadBtn').style.display = 'none';
-setTimeout(() => {
-exitBtn.classList.add('minimized');
-exitBtn.textContent = '✖';
-}, 2000);
+  document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+  item.classList.add('active');
+  document.getElementById('sidebar').classList.add('hidden');
+  const iframe = document.getElementById('playerFrame');
+  iframe.style.display = 'block';
+  iframe.src = url;
+  const exitBtn = document.getElementById('exitBtn');
+  exitBtn.style.display = 'block';
+  document.getElementById('uploadBtn').style.display = 'none';
+  setTimeout(() => {
+    exitBtn.classList.add('minimized');
+    exitBtn.textContent = '✖';
+  }, 2000);
 }
+
 document.getElementById('exitBtn').addEventListener('click', () => {
-document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
-const iframe = document.getElementById('playerFrame');
-iframe.style.display = 'none';
-iframe.src = '';
-document.getElementById('sidebar').classList.remove('hidden');
-document.getElementById('exitBtn').style.display = 'none';
-document.getElementById('exitBtn').classList.remove('minimized');
-document.getElementById('exitBtn').textContent = 'Exit Program';
-document.getElementById('uploadBtn').style.display = 'flex';
+  document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+  const iframe = document.getElementById('playerFrame');
+  iframe.style.display = 'none';
+  iframe.src = '';
+  document.getElementById('sidebar').classList.remove('hidden');
+  document.getElementById('exitBtn').style.display = 'none';
+  document.getElementById('exitBtn').classList.remove('minimized');
+  document.getElementById('exitBtn').textContent = 'Exit Program';
+  document.getElementById('uploadBtn').style.display = 'flex';
 });
+
 document.getElementById('uploadBtn').addEventListener('click', () => {
-const input = document.createElement('input');
-input.type = 'file';
-input.accept = '.html';
-input.onchange = e => {
-const file = e.target.files[0];
-if (file && file.name.endsWith('.html')) {
-const reader = new FileReader();
-reader.onload = () => {
-const blob = new Blob([reader.result], { type: 'text/html' });
-const url = URL.createObjectURL(blob);
-const displayName = file.name.replace(/\.html$/i, "");
-const item = document.createElement("div");
-item.className = "program-item uploaded";
-item.innerHTML = `<div class='program-name'>${displayName}</div><div class='program-icon' style='color: yellow;'>#</div>`;
-item.addEventListener('click', () => loadProgram(item, url));
-document.getElementById('programList').appendChild(item);
-};
-reader.readAsText(file);
-} else {
-alert('Please upload a valid HTML file.');
-}
-};
-input.click();
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.html';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (file && file.name.endsWith('.html')) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const blob = new Blob([reader.result], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const displayName = file.name.replace(/\.html$/i, "");
+        const item = document.createElement('div');
+        item.className = 'program-item uploaded';
+        item.innerHTML = `<div class='program-name'>${displayName}</div><div class='program-icon' style='color: yellow;'>#</div>`;
+        item.addEventListener('click', () => loadProgram(item, url));
+        document.getElementById('programList').appendChild(item);
+      };
+      reader.readAsText(file);
+    } else {
+      alert('Please upload a valid HTML file.');
+    }
+  };
+  input.click();
 });
-document.addEventListener('DOMContentLoaded', showPrograms);
+
+window.addEventListener('DOMContentLoaded', () => {
+  showPrograms();
+  loadSLV1();
+});
 </script>
 </body>
 </html>
