@@ -1,7 +1,7 @@
 import os
 import json
 
-# Basisverzeichnisse
+# Basisverzeichnisse automatisch setzen
 BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 PROGRAMMS_PATH = os.path.join(BASE_PATH, "programms")
 JSON_PATH = os.path.join(BASE_PATH, "system", "code", "programms.json")
@@ -13,6 +13,9 @@ def programme_zu_json():
     if not os.path.exists(PROGRAMMS_PATH):
         print(f"❌ Ordner '{PROGRAMMS_PATH}' wurde nicht gefunden.")
         return
+
+    print("🔍 Suche nach Programmen in:", PROGRAMMS_PATH)
+    print("--------------------------------------------------")
 
     # Alle Unterordner (Programme) durchgehen
     for unterordner in os.listdir(PROGRAMMS_PATH):
@@ -30,9 +33,20 @@ def programme_zu_json():
                 name_datei = datei
                 break
 
+        # Fehlende Dateien melden
+        fehlermeldungen = []
         if not name_datei:
-            print(f"⚠️ Keine .name-Datei in: {unterordner}")
-            continue
+            fehlermeldungen.append("❌ .name fehlt")
+        if not os.path.exists(icon_pfad):
+            fehlermeldungen.append("⚠️ icon.png fehlt")
+        if not os.path.exists(index_pfad):
+            fehlermeldungen.append("⚠️ index.html fehlt")
+
+        if fehlermeldungen:
+            print(f"[{unterordner}] -> " + ", ".join(fehlermeldungen))
+            # Programme ohne .name werden übersprungen
+            if not name_datei:
+                continue
 
         programmname = name_datei.replace(".name", "")
 
@@ -43,18 +57,17 @@ def programme_zu_json():
         }
 
         programme.append(programm_info)
+        print(f"✅ {programmname} erfolgreich hinzugefügt")
 
-    # Falls JSON-Datei existiert → leeren
+    # Ordner für JSON-Datei sicherstellen
     os.makedirs(os.path.dirname(JSON_PATH), exist_ok=True)
-    with open(JSON_PATH, "w", encoding="utf-8") as f:
-        json.dump([], f)
 
-    # Neue Daten schreiben
+    # JSON leeren & neu schreiben
     with open(JSON_PATH, "w", encoding="utf-8") as f:
         json.dump(programme, f, ensure_ascii=False, indent=4)
 
-    print(f"✅ {len(programme)} Programme gefunden und in '{JSON_PATH}' gespeichert.")
-
+    print("--------------------------------------------------")
+    print(f"💾 {len(programme)} Programme gespeichert in: {JSON_PATH}")
 
 if __name__ == "__main__":
     programme_zu_json()
