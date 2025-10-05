@@ -19,18 +19,10 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000;
 .program-list { flex-grow: 1; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
 .program-item { display: flex; align-items: center; background: #222; border-radius: 12px; padding: 10px; transition: background 0.3s, transform 0.3s; cursor: pointer; }
 .program-item:hover, .program-item.active { background: #333; transform: scale(1.02); }
-.program-item.uploaded { border: 2px solid yellow; }
-.program-item.media { border: 2px solid #0a0; }
 .program-name { flex-grow: 1; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .program-icon, .program-icon img { width: 32px; height: 32px; border-radius: 6px; }
 .program-icon { margin-left: 10px; background: #444; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.program-icon.play-icon { background: #0a0; }
 .player-frame { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; background: #000; animation: fadeIn 0.5s ease; z-index: 100; }
-.media-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; animation: fadeIn 0.5s ease; }
-.media-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-.media-content img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.media-content video { max-width: 100%; max-height: 100%; }
-.media-content audio { width: 80%; max-width: 600px; }
 .exit-btn { position: fixed; right: 20px; bottom: 20px; background: #e00; color: #fff; border: none; border-radius: 8px; cursor: pointer; padding: 10px 20px; font-size: 1rem; display: none; transition: all 0.5s ease; white-space: nowrap; overflow: hidden; z-index: 101; }
 .exit-btn.minimized { width: 40px; padding: 10px; animation: shrink 0.5s forwards; }
 .exit-btn:hover { background: #c00; }
@@ -39,8 +31,6 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000;
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes shrink { from { width: auto; } to { width: 40px; } }
 </style>
-<!-- JSZip für ZIP-Verarbeitung -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </head>
 <body>
 <div class="sidebar" id="sidebar">
@@ -53,231 +43,90 @@ html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #000;
   </div>
   <div class="program-list" id="programList"></div>
 </div>
+
 <iframe id="playerFrame" class="player-frame" allowfullscreen></iframe>
-<div id="mediaViewer" class="media-viewer">
-  <div class="media-content" id="mediaContent"></div>
-</div>
 <button id="exitBtn" class="exit-btn">Exit Program</button>
 <button id="uploadBtn" class="upload-btn">+</button>
-<script>
-const programConfig = {
-  clock: { name: "Clock", iconPath: "../../programms/clock/icon/icon.png", launchPath: "../../programms/clock/clock.html" },
-  "Colorful Palettes": { name: "Colorful Palettes", iconPath: "../../programms/Colorfull Pallets/icon/icon.png", launchPath: "../../programms/Colorfull Pallets/Colorfull Palets.html" },
-  Storywriter: { name: "Storywriter", iconPath: "../../programms/Storywrighter/icon/icon.png", launchPath: "../../programms/Storywrighter/Storywrighter.html" },
-  "QR Maker": { name: "QR Maker", iconPath: "../../programms/Qr-Maker/icon/icon.png", launchPath: "../../programms/Qr-Maker/Qr Code Generator.html" },
-  "Dynamic Notes": { name: "Dynamic Notes", iconPath: "../../programms/Dynamic/icon/icon.png", launchPath: "../../programms/Dynamic/Dynamic Notes.html" }
-};
 
-// Time
+<script>
+// 🕒 Uhrzeit anzeigen
 function updateTime() {
   const now = new Date();
   document.getElementById('time').textContent = now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 setInterval(updateTime,1000); updateTime();
 
-// Show hardcoded programs
-let allPrograms = [];
-
-function createProgramItem(cfg, isUploaded = false, isMedia = false) {
-  const item = document.createElement('div');
-  item.className = 'program-item';
-  if (isUploaded) item.classList.add('uploaded');
-  if (isMedia) item.classList.add('media');
-  
-  item.innerHTML = `<div class='program-name'>${cfg.name}</div>
-    <div class='program-icon'>${isMedia ? '<div class="play-icon">▶</div>' : (cfg.iconPath ? `<img src='${cfg.iconPath}' alt='${cfg.name}'/>` : '#')}</div>`;
-  
-  return item;
-}
-
-function showPrograms() {
-  const list = document.getElementById('programList');
-  allPrograms = Object.values(programConfig);
-  
-  allPrograms.forEach(cfg => {
-    const item = createProgramItem(cfg);
-    item.onclick = () => loadProgram(item, cfg.launchPath);
-    list.appendChild(item);
-  });
-}
-
-// Check if file is supported media type
-function isMediaFile(filename) {
-  const ext = filename.toLowerCase().split('.').pop();
-  return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'mp3', 'wav', 'wave', 'flac', 'ogg', 'mp4', 'webm', 'mov', 'avi'].includes(ext);
-}
-
-// Get media type from filename
-function getMediaType(filename) {
-  const ext = filename.toLowerCase().split('.').pop();
-  if(['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return 'image';
-  if(['mp3', 'wav', 'wave', 'flac', 'ogg'].includes(ext)) return 'audio';
-  if(['mp4', 'webm', 'mov', 'avi'].includes(ext)) return 'video';
-  return 'unknown';
-}
-
-// Search functionality
+// 🔍 Suche initialisieren
 function initSearch() {
   const searchBox = document.getElementById('searchBox');
   searchBox.addEventListener('input', (e) => {
     const query = e.target.value.toLowerCase();
     const items = document.querySelectorAll('.program-item');
-    
     items.forEach(item => {
       const name = item.querySelector('.program-name').textContent.toLowerCase();
-      if (name.includes(query)) {
-        item.style.display = 'flex';
-      } else {
-        item.style.display = 'none';
-      }
+      item.style.display = name.includes(query) ? 'flex' : 'none';
     });
   });
 }
-function createMediaElement(url, type, filename) {
-  const mediaContent = document.getElementById('mediaContent');
-  mediaContent.innerHTML = '';
-  
-  let element;
-  if(type === 'image') {
-    element = document.createElement('img');
-    element.src = url;
-    element.alt = filename;
-  } else if(type === 'audio') {
-    element = document.createElement('audio');
-    element.src = url;
-    element.controls = true;
-    element.autoplay = true;
-  } else if(type === 'video') {
-    element = document.createElement('video');
-    element.src = url;
-    element.controls = true;
-    element.autoplay = true;
-  }
-  
-  if(element) {
-    mediaContent.appendChild(element);
+
+// 🧩 Programmliste aus JSON laden
+async function loadPrograms() {
+  try {
+    const res = await fetch('./programms.json');
+    if (!res.ok) throw new Error('Datei nicht gefunden');
+    const data = await res.json();
+
+    const list = document.getElementById('programList');
+    list.innerHTML = '';
+
+    data.forEach(prog => {
+      const item = document.createElement('div');
+      item.className = 'program-item';
+      item.innerHTML = `
+        <div class="program-name">${prog.programmname}</div>
+        <div class="program-icon"><img src="${prog.icon}" alt="${prog.programmname}"></div>
+      `;
+      item.onclick = () => loadProgram(item, prog.index);
+      list.appendChild(item);
+    });
+
+    console.log(`✅ ${data.length} Programme geladen.`);
+  } catch (err) {
+    console.error('❌ Fehler beim Laden der Programmliste:', err);
   }
 }
 
-// Create media element
-function loadMedia(item, url, type, filename) {
-  document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
+// ▶ Programm starten
+function loadProgram(item, url) {
+  document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
   item.classList.add('active');
   document.getElementById('sidebar').classList.add('hidden');
-  
-  createMediaElement(url, type, filename);
-  document.getElementById('mediaViewer').style.display = 'block';
-  
-  const ex=document.getElementById('exitBtn'); 
-  ex.style.display='block'; 
-  document.getElementById('uploadBtn').style.display='none';
-  setTimeout(()=>{ex.classList.add('minimized'); ex.textContent='✖';},2000);
+  const frame = document.getElementById('playerFrame');
+  frame.src = url;
+  frame.style.display = 'block';
+
+  const exit = document.getElementById('exitBtn');
+  exit.style.display = 'block';
+  document.getElementById('uploadBtn').style.display = 'none';
+  setTimeout(() => { exit.classList.add('minimized'); exit.textContent = '✖'; }, 2000);
 }
 
-// Load user-upload
-function enableUpload(){
-  document.getElementById('uploadBtn').onclick=()=>{
-    const inp=document.createElement('input'); 
-    inp.type='file'; 
-    inp.accept='.html,.png,.jpg,.jpeg,.gif,.webp,.mp3,.wav,.wave,.flac,.ogg,.mp4,.webm,.mov,.avi';
-    inp.onchange=e=>{
-      const f=e.target.files[0]; 
-      if(f) {
-        const name=f.name.replace(/\.[^/.]+$/,'');
-        const cfg = { name: name, iconPath: null };
-        
-        if(f.name.endsWith('.html')) {
-          // HTML file handling (existing functionality)
-          const reader=new FileReader(); 
-          reader.onload=()=>{
-            const blob=new Blob([reader.result],{type:'text/html'});
-            const url=URL.createObjectURL(blob);
-            cfg.launchPath = url;
-            const item = createProgramItem(cfg, true, false);
-            item.onclick=()=>loadProgram(item,url);
-            document.getElementById('programList').appendChild(item);
-            allPrograms.push(cfg);
-          }; 
-          reader.readAsText(f);
-        } else if(isMediaFile(f.name)) {
-          // Media file handling
-          const reader=new FileReader(); 
-          reader.onload=()=>{
-            const blob=new Blob([reader.result],{type:f.type});
-            const url=URL.createObjectURL(blob);
-            const mediaType = getMediaType(f.name);
-            cfg.mediaUrl = url;
-            cfg.mediaType = mediaType;
-            const item = createProgramItem(cfg, false, true);
-            item.onclick=()=>loadMedia(item,url,mediaType,f.name);
-            document.getElementById('programList').appendChild(item);
-            allPrograms.push(cfg);
-          }; 
-          reader.readAsArrayBuffer(f);
-        } else {
-          alert('Please upload a valid HTML file or supported media file.');
-          return;
-        }
-      }
-    };
-    inp.click();
-  };
-}
-
-// SLV1 loader
-async function loadSLV1(){
-  try{
-    const res=await fetch('../../programms/');
-    const txt=await res.text();
-    const doc=new DOMParser().parseFromString(txt,'text/html');
-    const links=[...doc.querySelectorAll('a')].map(a=>a.href||a.text).filter(h=>/\.(simple_limbo_v1|slv1)$/i.test(h));
-    for(const l of links){
-      const data=await(fetch(l).then(r=>r.arrayBuffer()));
-      const zip=await JSZip.loadAsync(data);
-      const htmlStr=await zip.file('main.html').async('string');
-      const iconBlob=await zip.file('icon.png').async('blob');
-      const htmlUrl=URL.createObjectURL(new Blob([htmlStr],{type:'text/html'}));
-      const iconUrl=URL.createObjectURL(iconBlob);
-      const name=l.split('/').pop().replace(/\.(simple_limbo_v1|slv1)$/i,'');
-      const cfg = { name: name + ' [SLV1]', iconPath: iconUrl, launchPath: htmlUrl };
-      const item = createProgramItem(cfg);
-      item.onclick=()=>loadProgram(item,htmlUrl);
-      document.getElementById('programList').appendChild(item);
-      allPrograms.push(cfg);
-    }
-  } catch(e){console.error('SLV1 error',e);}  
-}
-
-// Load program
-function loadProgram(item,url){
-  document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
-  item.classList.add('active');
-  document.getElementById('sidebar').classList.add('hidden');
-  const fr=document.getElementById('playerFrame'); fr.src=url; fr.style.display='block';
-  
-  // Request fullscreen
-  if (fr.requestFullscreen) {
-    fr.requestFullscreen();
-  } else if (fr.webkitRequestFullscreen) {
-    fr.webkitRequestFullscreen();
-  } else if (fr.msRequestFullscreen) {
-    fr.msRequestFullscreen();
-  }
-  
-  const ex=document.getElementById('exitBtn'); ex.style.display='block'; document.getElementById('uploadBtn').style.display='none';
-  setTimeout(()=>{ex.classList.add('minimized'); ex.textContent='✖';},2000);
-}
-
-document.getElementById('exitBtn').onclick=()=>{
-  document.querySelectorAll('.program-item').forEach(el=>el.classList.remove('active'));
-  const fr=document.getElementById('playerFrame'); fr.style.display='none'; fr.src='';
-  document.getElementById('mediaViewer').style.display='none';
+// ⏹ Programm schließen
+document.getElementById('exitBtn').onclick = () => {
+  document.querySelectorAll('.program-item').forEach(el => el.classList.remove('active'));
+  const fr = document.getElementById('playerFrame');
+  fr.style.display = 'none'; fr.src = '';
   document.getElementById('sidebar').classList.remove('hidden');
-  const ex=document.getElementById('exitBtn'); ex.style.display='none'; ex.classList.remove('minimized'); ex.textContent='Exit Program';
-  document.getElementById('uploadBtn').style.display='flex';
+  const ex = document.getElementById('exitBtn'); ex.style.display = 'none'; ex.classList.remove('minimized'); ex.textContent = 'Exit Program';
+  document.getElementById('uploadBtn').style.display = 'flex';
 };
 
-window.addEventListener('DOMContentLoaded',()=>{ showPrograms(); enableUpload(); loadSLV1(); initSearch(); });
+// 🧠 Start
+window.addEventListener('DOMContentLoaded', () => {
+  loadPrograms();
+  initSearch();
+  updateTime();
+});
 </script>
 </body>
 </html>
